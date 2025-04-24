@@ -1,3 +1,133 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital ,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+.inter {
+    font-family: "Inter", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 300;
+    font-style: normal;
+}
+
+ :root {
+    --font-inter: 'Inter', sans-serif;
+    --font-montserrat: 'Montserrat', sans-serif;
+    --font-poppins: 'Poppins', sans-serif;
+}
+
+body {
+    font-family: var(--font-inter);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-montserrat);
+}
+
+button,
+.button {
+    font-family: var(--font-poppins);
+}
+
+.bg-primary {
+    background-color: #0066CC;
+}
+
+.bg-secondary {
+    background-color: #FFAD03;
+}
+
+.bg-tertiary {
+    background-color: #FD9148;
+}
+
+.text-primary {
+    color: #0066CC;
+}
+
+.text-secondary {
+    color: #FFAD03;
+}
+
+.text-tertiary {
+    color: #FD9148;
+}
+
+.border-primary {
+    border-color: #0066CC;
+}
+
+.border-secondary {
+    border-color: #FFAD03;
+}
+
+.border-tertiary {
+    border-color: #FD9148;
+}
+
+.btn-primary {
+    background-color: #0066CC;
+    color: white;
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #0055aa;
+}
+
+.btn-secondary {
+    background-color: #FFAD03;
+    color: white;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    background-color: #e69c00;
+}
+
+.btn-tertiary {
+    background-color: #FD9148;
+    color: white;
+    transition: all 0.3s;
+}
+
+.btn-tertiary:hover {
+    background-color: #ec8035;
+}
+
+.shadow-custom {
+    box-shadow: 0 4px 6px rgba(0, 102, 204, 0.1);
+}
+
+.section-heading::after {
+    content: "";
+    display: block;
+    width: 100px;
+    height: 4px;
+    background-color: #FFAD03;
+    margin-top: 10px;
+}
+
+.newsletter-animation {
+    position: relative;
+    overflow: hidden;
+}
+
+.newsletter-animation::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(30deg);
+    animation: shine 3s infinite linear;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
