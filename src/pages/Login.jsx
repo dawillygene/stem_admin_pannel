@@ -19,7 +19,6 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
       const user = {
@@ -45,7 +44,7 @@ const Login = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Left: Illustration or Info */}
+       
         <div className="md:w-1/2 bg-gradient-to-br from-[#0066CC] to-[#FD9148] text-white p-8 flex flex-col justify-center items-center">
           <FaUniversity className="text-5xl mb-4" />
           <h2 className="text-3xl font-bold mb-2 text-center">UDOM STEM Education</h2>
