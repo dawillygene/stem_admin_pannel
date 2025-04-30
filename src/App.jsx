@@ -9,6 +9,7 @@ import BlogUpload from "./pages/BlogUpload";
 import Profile from "./pages/Profile";
 import Login from "./pages/Auth/Login";
 import NormalAdminDashboard from "./pages/NormalAdminDashboard";
+import GalleryAdmin from "./components/Gallery/GalleryAdmin";
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -92,6 +93,7 @@ function App() {
                             </ProtectedRoute>
                           }
                         />
+                           <Route path="/gallery" element={<GalleryAdmin />} />
                         <Route path="/blogs" element={<BlogUpload />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route

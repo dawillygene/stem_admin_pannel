@@ -58,10 +58,10 @@ const Navbar = () => {
     },
     { path: "/blogs", icon: <FaFileUpload />, label: "Blogs & Publications" },
     { path: "/gallery", icon: <FaImage />, label: "Gallery" },
-    { path: "/programs", icon: <FaBook />, label: "Programs" },
-    { path: "/reports", icon: <FaClipboardList />, label: "Reports" },
+    // { path: "/programs", icon: <FaBook />, label: "Programs" },
+    // { path: "/reports", icon: <FaClipboardList />, label: "Reports" },
     { path: "/profile", icon: <FaUser />, label: "Profile" },
-    { path: "/settings", icon: <FaCog />, label: "Settings" },
+    // { path: "/settings", icon: <FaCog />, label: "Settings" },
   ];
 
   return (
