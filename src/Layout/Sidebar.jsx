@@ -1,6 +1,5 @@
-import { useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaHome,
@@ -8,23 +7,24 @@ import {
   FaUsers,
   FaComment,
   FaFileUpload,
-  FaCog,
   FaSignOutAlt,
   FaBars,
   FaTimes,
   FaChartBar,
   FaImage,
-  FaBook,
-  FaClipboardList,
   FaUniversity,
 } from "react-icons/fa";
 
-const Navbar = () => {
-  const { user, logout } = useContext(AuthContext);
+const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Mock user data (no role)
+  const user = {
+    name: "Admin",
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -36,32 +36,19 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    // Show confirmation dialog
     if (window.confirm("Are you sure you want to log out?")) {
-      logout();
       navigate("/login");
     }
   };
 
   const navItems = [
     { path: "/home", icon: <FaHome />, label: "Home" },
-    ...(user?.role === "superadmin"
-      ? [{ path: "/super-admin", icon: <FaChartBar />, label: "Dashboard" }]
-      : [{ path: "/normal-admin", icon: <FaChartBar />, label: "Dashboard" }]),
-    ...(user?.role === "superadmin"
-      ? [{ path: "/admins", icon: <FaUsers />, label: "Admins" }]
-      : []),
-    {
-      path: user?.role === "superadmin" ? "/super-admin" : "/normal-admin",
-      icon: <FaComment />,
-      label: "Comments",
-    },
+    { path: "/super-admin", icon: <FaChartBar />, label: "Dashboard" },
+    { path: "/admins", icon: <FaUsers />, label: "Admins" },
+    { path: "/comments", icon: <FaComment />, label: "Comments" },
     { path: "/blogs", icon: <FaFileUpload />, label: "Blogs & Publications" },
     { path: "/gallery", icon: <FaImage />, label: "Gallery" },
-    // { path: "/programs", icon: <FaBook />, label: "Programs" },
-    // { path: "/reports", icon: <FaClipboardList />, label: "Reports" },
     { path: "/profile", icon: <FaUser />, label: "Profile" },
-    // { path: "/settings", icon: <FaCog />, label: "Settings" },
   ];
 
   return (
@@ -107,11 +94,10 @@ const Navbar = () => {
           <div className="px-4 py-4 border-b border-blue-700">
             <div className="flex items-center">
               <div className="w-10 h-10 rounded-full bg-[#FFAD03] flex items-center justify-center text-white font-bold">
-                {user?.name?.charAt(0) || "A"}
+                {user.name.charAt(0)}
               </div>
               <div className="ml-3">
-                <p className="font-medium">{user?.name || "Admin"}</p>
-                <p className="text-xs text-blue-200">{user?.role || "admin"}</p>
+                <p className="font-medium">{user.name}</p>
               </div>
             </div>
           </div>
@@ -119,7 +105,7 @@ const Navbar = () => {
           <nav className="flex-1 overflow-y-auto pt-4">
             <ul className="px-2 space-y-1">
               {navItems.map((item, index) => (
-                <motion.li 
+                <motion.li
                   key={item.label}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -129,8 +115,8 @@ const Navbar = () => {
                     to={item.path}
                     className={({ isActive }) =>
                       `flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActive 
-                          ? "bg-white text-[#0066CC] shadow-md" 
+                        isActive
+                          ? "bg-white text-[#0066CC] shadow-md"
                           : "text-white hover:bg-blue-700"
                       }`
                     }
@@ -140,7 +126,7 @@ const Navbar = () => {
                     <span className="text-lg mr-3">{item.icon}</span>
                     <span>{item.label}</span>
                     {location.pathname === item.path && (
-                      <motion.span 
+                      <motion.span
                         className="ml-auto h-2 w-2 rounded-full bg-[#FFAD03]"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
@@ -163,11 +149,9 @@ const Navbar = () => {
               <FaSignOutAlt />
               <span>Logout</span>
             </motion.button>
-            
+
             <div className="mt-4 text-center">
-              <p className="text-xs text-blue-200">
-                © 2025 University of Dodoma
-              </p>
+              <p className="text-xs text-blue-200">© 2025 University of Dodoma</p>
             </div>
           </div>
         </motion.div>
@@ -190,4 +174,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default Sidebar;

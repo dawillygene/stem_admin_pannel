@@ -1,5 +1,5 @@
-import { useContext, useState, useRef, useEffect } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { useState, useRef, useEffect } from "react";
+
 import { 
   FaUser, FaEnvelope, FaIdBadge, FaPhone, FaMapMarkerAlt, 
   FaCalendarAlt, FaBriefcase, FaGraduationCap, FaCamera, 
@@ -8,11 +8,12 @@ import {
 } from "react-icons/fa";
 
 const Profile = () => {
-  const { user, updateUser, logout } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
   
+  const user = null;
+  const logout = null;
   // Form state
   const [formData, setFormData] = useState({
     name: user?.name || "",

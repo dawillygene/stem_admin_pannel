@@ -1,10 +1,9 @@
-import { useContext, useState, useEffect } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { useState, useEffect } from "react";
 import { FaCheckCircle, FaTimesCircle, FaComment, FaHistory, FaChartLine, FaFileAlt, FaUserGraduate, FaBook } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 const NormalAdminDashboard = () => {
-  const { user } = useContext(AuthContext);
+
   const [comments, setComments] = useState([
     { id: 1, user: "dawilly", comment: "Great article on STEM education!", date: "2025-04-18" },
     { id: 2, user: "elly", comment: "Very informative content on science teaching methods.", date: "2025-04-19" },

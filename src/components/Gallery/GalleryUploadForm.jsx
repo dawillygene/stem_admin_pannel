@@ -26,7 +26,7 @@ const GalleryUploadForm = ({ onSubmit }) => {
       ...formData,
       [name]: value
     });
-    
+
     // Clear error for this field
     if (errors[name]) {
       setErrors({
@@ -65,7 +65,7 @@ const GalleryUploadForm = ({ onSubmit }) => {
           ...formData,
           image: reader.result
         });
-        
+
         // Clear error for image field
         if (errors.image) {
           setErrors({
@@ -80,19 +80,19 @@ const GalleryUploadForm = ({ onSubmit }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.title.trim()) newErrors.title = 'Title is required';
     if (!formData.description.trim()) newErrors.description = 'Description is required';
     if (!formData.image) newErrors.image = 'Image is required';
     if (formData.tags.length === 0) newErrors.tags = 'At least one tag is required';
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       onSubmit(formData);
     }
@@ -101,7 +101,7 @@ const GalleryUploadForm = ({ onSubmit }) => {
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-bold mb-6">Add New Gallery Item</h2>
-      
+
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
@@ -114,14 +114,13 @@ const GalleryUploadForm = ({ onSubmit }) => {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
-                  errors.title ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.title ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 placeholder="Enter title"
               />
               {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Description
@@ -131,14 +130,13 @@ const GalleryUploadForm = ({ onSubmit }) => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="4"
-                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
-                  errors.description ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.description ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 placeholder="Enter description"
               ></textarea>
               {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Category
@@ -156,7 +154,7 @@ const GalleryUploadForm = ({ onSubmit }) => {
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Tags
@@ -198,7 +196,7 @@ const GalleryUploadForm = ({ onSubmit }) => {
               {errors.tags && <p className="text-red-500 text-xs mt-1">{errors.tags}</p>}
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Image
@@ -243,9 +241,8 @@ const GalleryUploadForm = ({ onSubmit }) => {
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
-                className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer ${
-                  formData.image ? 'hidden' : ''
-                }`}
+                className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer ${formData.image ? 'hidden' : ''
+                  }`}
               />
             </div>
             {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image}</p>}
@@ -254,7 +251,7 @@ const GalleryUploadForm = ({ onSubmit }) => {
             </p>
           </div>
         </div>
-        
+
         <div className="mt-8 flex justify-end">
           <button
             type="submit"
