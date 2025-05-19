@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import AuthLayout from "./AuthLayout";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
-import ErrorMessage from "./ErrorMessage";
+import ErrorMessage from "../ErrorMessage/ErrorMessage";
+
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -30,13 +31,38 @@ const AuthPage = () => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-  
-      navigate("/home");
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          username,
+          password
+        })
+      });
+
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        data = { message: await response.text() };
+      }
+
+      if (response.ok) {
+        console.log("Login successful:", data);
+        // You can set a success message or redirect
+        // navigate("/home");
+      } else {
+        setError(data.message || "Login failed. Please try again.");
+      }
     } catch (err) {
-      setError("Invalid credentials. Please try again.");
+      setError("An error occurred. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -48,14 +74,13 @@ const AuthPage = () => {
     setIsLoading(true);
 
     try {
-      // Use the complete server URL
-      const response = await fetch("api/auth/register", {
+      const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
-        credentials: "include", // Include cookies if needed
+        credentials: "include",
         body: JSON.stringify({
           name,
           email: registerEmail,
@@ -75,19 +100,16 @@ const AuthPage = () => {
       }
 
       if (response.ok) {
-        console.log("Registration successful:", data);
         setSuccessMessage(data.message || "You are successfully registered! Awaiting approval.");
         setTimeout(() => {
           navigate("/login");
           window.location.reload();
         }, 3000);
       } else {
-        const errorMessage = data.message || "Registration failed. Please try again.";
-        console.error("Registration failed:", errorMessage);
-        setError(errorMessage);
+        setError(data.message || "Registration failed. Please try again.");
       }
     } catch (err) {
-      console.error("Error during registration:", err);
+      console.error("Error during registration:", err.message);
       setError("An error occurred. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
@@ -111,11 +133,6 @@ const AuthPage = () => {
             <div className="bg-green-100 text-green-700 p-4 rounded-md mb-4 text-center">
               {successMessage}
             </div>
-          )}
-
-          {/* Display error message */}
-          {error && (
-            <ErrorMessage message={error} />
           )}
 
           {isRegistering ? (

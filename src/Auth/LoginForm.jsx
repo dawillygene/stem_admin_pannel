@@ -1,6 +1,7 @@
 import { FaUserShield, FaLock } from "react-icons/fa";
 import InputField from "./InputField";
 import AuthButton from "./AuthButton";
+import ErrorMessage from "../ErrorMessage/ErrorMessage";
 
 const LoginForm = ({
   username,
