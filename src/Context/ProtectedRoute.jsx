@@ -1,12 +1,15 @@
-import { Navigate } from 'react-router-dom';
+import { useAuth } from "./AppProvier";
+import { Navigate } from "react-router-dom";
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth(); // You'll need to implement this hook
-  
-  if (!isAuthenticated) {
+  const { jwt, loading } = useAuth();
+
+  if (loading) return null; // or a spinner
+
+  if (!jwt) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return children;
 };
 

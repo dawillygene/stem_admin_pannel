@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import AuthLayout from "./AuthLayout";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
+import { useAuth } from "../Context/AppProvier";
 
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const { setJwt, jwt } = useAuth();
+  const [showLoading, setShowLoading] = useState(false);
   
   // Login state
   const [username, setUsername] = useState("");
@@ -26,6 +29,30 @@ const AuthPage = () => {
 
   // Success message state
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (jwt) {
+      // Redirect to last route or default to /home
+      const lastRoute = sessionStorage.getItem("lastRoute") || "/home";
+      navigate(lastRoute, { replace: true });
+    }
+  }, [jwt, navigate]);
+
+  // Show loading spinner while loading or showLoading is true
+  useEffect(() => {
+    let timer;
+    if (isLoading) {
+      setShowLoading(true);
+      timer = setTimeout(() => {
+        setShowLoading(false);
+      }, 2000);
+    } else {
+      // If loading finishes before 2s, still wait for timer
+      timer = setTimeout(() => setShowLoading(false), 2000);
+    }
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -55,9 +82,10 @@ const AuthPage = () => {
       }
 
       if (response.ok) {
-        console.log("Login successful:", data);
-        // You can set a success message or redirect
-        // navigate("/home");
+        // Store the JWT in context
+        setJwt(data.accessToken);
+        // Redirect or show success
+        navigate("/home");
       } else {
         setError(data.message || "Login failed. Please try again.");
       }
@@ -82,12 +110,12 @@ const AuthPage = () => {
         },
         credentials: "include",
         body: JSON.stringify({
-          name,
+          name:name,
           email: registerEmail,
           password: registerPassword,
           confirmPassword,
           department,
-          username
+          username:username
         })
       });
 
@@ -115,6 +143,23 @@ const AuthPage = () => {
       setIsLoading(false);
     }
   };
+
+  // Only show spinner while loading or showLoading is true, or while checking auth
+  if (isLoading || showLoading || jwt === undefined) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <motion.div
+          className="w-16 h-16 border-4 border-blue-300 border-t-[#0066CC] rounded-full animate-spin"
+          initial={{ scale: 0.8, opacity: 0.5 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ repeat: Infinity, duration: 1 }}
+        />
+      </div>
+    );
+  }
+
+  // If authenticated, don't render login page at all (redirect handled by useEffect)
+  if (jwt) return null;
 
   return (
     <AuthLayout>
