@@ -14,6 +14,7 @@ import {
   FaImage,
   FaUniversity,
 } from "react-icons/fa";
+import API from "../utils/axios";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -35,9 +36,16 @@ const Sidebar = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm("Are you sure you want to log out?")) {
-      navigate("/login");
+      try {
+        await API.post("/auth/logout");
+        // Optionally clear local storage or context here
+        window.location.href = "/login";
+      } catch (err) {
+        alert("Logout failed. Please try again.");
+        console.error("Logout error:", err);
+      }
     }
   };
 

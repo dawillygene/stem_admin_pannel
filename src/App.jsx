@@ -4,7 +4,7 @@ import Home from "./pages/Home";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import AdminList from "./pages/AdminList/AdminList";
 import BlogUpload from "./pages/BlogUpload";
-import Profile from "./pages/Profile";
+import Profile from "./pages/Profile/Profile";
 import Auth from "./Auth/AuthPage";
 import NormalAdminDashboard from "./pages/NormalAdminDashboard";
 import GalleryAdmin from "./components/Gallery/GalleryAdmin";
