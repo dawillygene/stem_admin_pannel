@@ -22,7 +22,7 @@ const ProfilePersonalInfo = ({
     </div>
     <form onSubmit={handlePersonalInfoSubmit}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Name */}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <FaUser className="inline mr-2 text-[#0066CC]" />
@@ -40,7 +40,7 @@ const ProfilePersonalInfo = ({
             required
           />
         </div>
-        {/* Email */}
+   
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <FaEnvelope className="inline mr-2 text-[#0066CC]" />
@@ -58,7 +58,7 @@ const ProfilePersonalInfo = ({
             required
           />
         </div>
-        {/* Phone */}
+  
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <FaPhone className="inline mr-2 text-[#0066CC]" />
@@ -75,7 +75,7 @@ const ProfilePersonalInfo = ({
             } rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#0066CC]`}
           />
         </div>
-        {/* Address */}
+   
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <FaMapMarkerAlt className="inline mr-2 text-[#0066CC]" />
@@ -92,7 +92,7 @@ const ProfilePersonalInfo = ({
             } rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#0066CC]`}
           />
         </div>
-        {/* Birthdate */}
+    
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <FaCalendarAlt className="inline mr-2 text-[#0066CC]" />
@@ -109,7 +109,7 @@ const ProfilePersonalInfo = ({
             } rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#0066CC]`}
           />
         </div>
-        {/* Role */}
+      
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <FaIdBadge className="inline mr-2 text-[#0066CC]" />
@@ -122,7 +122,7 @@ const ProfilePersonalInfo = ({
             className="w-full border border-gray-200 bg-gray-50 text-gray-700 rounded-lg px-4 py-2 cursor-not-allowed"
           />
         </div>
-        {/* Occupation */}
+    
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <FaBriefcase className="inline mr-2 text-[#0066CC]" />
@@ -139,7 +139,7 @@ const ProfilePersonalInfo = ({
             } rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#0066CC]`}
           />
         </div>
-        {/* Education */}
+   
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             <FaGraduationCap className="inline mr-2 text-[#0066CC]" />
@@ -157,7 +157,7 @@ const ProfilePersonalInfo = ({
           />
         </div>
       </div>
-      {/* Bio */}
+  
       <div className="mt-6">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Bio
@@ -174,7 +174,7 @@ const ProfilePersonalInfo = ({
           placeholder={isEditing ? "Tell us about yourself..." : ""}
         ></textarea>
       </div>
-      {/* Action Buttons */}
+    
       {isEditing && (
         <div className="mt-6 flex justify-end space-x-4">
           <button

@@ -15,7 +15,6 @@ export const attachJwtInterceptor = (getJwt) => {
       const jwt = getJwt();
       if (jwt) {
         config.headers["Authorization"] = `Bearer ${jwt}`;
-        console.log("JWT attached to request:", jwt);
       }
       return config;
     },

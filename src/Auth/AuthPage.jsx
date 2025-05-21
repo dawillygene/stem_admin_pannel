@@ -7,49 +7,38 @@ import RegisterForm from "./RegisterForm";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import { useAuth } from "../Context/AppProvier";
 
-
 const AuthPage = () => {
   const navigate = useNavigate();
   const { setJwt, jwt } = useAuth();
   const [showLoading, setShowLoading] = useState(false);
-  
-  // Login state
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  
-  // Register state
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [department, setDepartment] = useState("");
-
-  // Success message state
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (jwt) {
-      // Redirect to last route or default to /home
       const lastRoute = sessionStorage.getItem("lastRoute") || "/home";
       navigate(lastRoute, { replace: true });
     }
   }, [jwt, navigate]);
 
-  // Show loading spinner while loading or showLoading is true
   useEffect(() => {
     let timer;
     if (isLoading) {
       setShowLoading(true);
       timer = setTimeout(() => {
         setShowLoading(false);
-      }, 2000);
+      }, 1000);
     } else {
-      // If loading finishes before 2s, still wait for timer
-      timer = setTimeout(() => setShowLoading(false), 2000);
+      timer = setTimeout(() => setShowLoading(false), 1000);
     }
     return () => clearTimeout(timer);
   }, [isLoading]);
@@ -82,9 +71,7 @@ const AuthPage = () => {
       }
 
       if (response.ok) {
-        // Store the JWT in context
         setJwt(data.accessToken);
-        // Redirect or show success
         navigate("/home");
       } else {
         setError(data.message || "Login failed. Please try again.");
@@ -110,12 +97,12 @@ const AuthPage = () => {
         },
         credentials: "include",
         body: JSON.stringify({
-          name:name,
+          name: name,
           email: registerEmail,
           password: registerPassword,
           confirmPassword,
           department,
-          username:username
+          username: username
         })
       });
 
@@ -137,14 +124,15 @@ const AuthPage = () => {
         setError(data.message || "Registration failed. Please try again.");
       }
     } catch (err) {
-      console.error("Error during registration:", err.message);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error during registration:", err.message);
+      }
       setError("An error occurred. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Only show spinner while loading or showLoading is true, or while checking auth
   if (isLoading || showLoading || jwt === undefined) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
@@ -158,7 +146,6 @@ const AuthPage = () => {
     );
   }
 
-  // If authenticated, don't render login page at all (redirect handled by useEffect)
   if (jwt) return null;
 
   return (
@@ -172,14 +159,11 @@ const AuthPage = () => {
           <h3 className="text-2xl font-bold text-[#0066CC] text-center mb-6">
             {isRegistering ? "Create an Account" : "Admin Portal Login"}
           </h3>
-
-          {/* Display success message */}
           {successMessage && (
             <div className="bg-green-100 text-green-700 p-4 rounded-md mb-4 text-center">
               {successMessage}
             </div>
           )}
-
           {isRegistering ? (
             <RegisterForm
               name={name}
@@ -211,7 +195,6 @@ const AuthPage = () => {
               onSubmit={handleLoginSubmit}
             />
           )}
-          
           <div className="mt-8 text-center text-xs text-gray-500">
             <p>© 2025 University of Dodoma. All rights reserved.</p>
           </div>

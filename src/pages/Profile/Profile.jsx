@@ -12,10 +12,8 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
 
-  // User state
   const [user, setUser] = useState(null);
 
-  // Form state
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,33 +26,27 @@ const Profile = () => {
     profilePicture: null,
   });
 
-  // Preview image
   const [previewImage, setPreviewImage] = useState(null);
 
-  // Password change state
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: ""
   });
 
-  // Notifications settings
   const [notifications, setNotifications] = useState({
     email: true,
     app: true,
     updates: false,
   });
 
-  // Security settings
   const [security, setSecurity] = useState({
     twoFactor: false,
     sessionTimeout: "30",
   });
 
-  // Success message state
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Fetch user data on mount
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -88,7 +80,6 @@ const Profile = () => {
     fetchUser();
   }, []);
 
-  // Show success message temporarily
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => {
@@ -98,7 +89,6 @@ const Profile = () => {
     }
   }, [successMessage]);
 
-  // Handle logout
   const handleLogout = async () => {
     if (window.confirm("Are you sure you want to log out?")) {
       try {
@@ -111,7 +101,6 @@ const Profile = () => {
     }
   };
 
-  // PUT method to update user
   const updateUser = async (updatedData) => {
     try {
       const res = await API.put('/auth/users/me', {
@@ -129,7 +118,6 @@ const Profile = () => {
     }
   };
 
-  // Handlers for each section
   const handlePersonalInfoSubmit = (e) => {
     e.preventDefault();
     updateUser({ ...user, ...formData });
@@ -159,7 +147,6 @@ const Profile = () => {
       });
     } catch (err) {
       setSuccessMessage("Failed to update password.");
-      console.error("Failed to update password:", err);
     }
   };
 
@@ -181,7 +168,6 @@ const Profile = () => {
     setSuccessMessage("Security settings updated!");
   };
 
-  // Handlers for input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({

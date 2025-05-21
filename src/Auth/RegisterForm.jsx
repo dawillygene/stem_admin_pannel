@@ -3,6 +3,8 @@ import InputField from "./InputField";
 import AuthButton from "./AuthButton";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 
+const containsHtml = (str) => /<[^>]+>/g.test(str);
+
 const RegisterForm = ({
   name,
   setName,
@@ -21,6 +23,12 @@ const RegisterForm = ({
   onSwitchToLogin,
   onSubmit
 }) => {
+  const handleSafeChange = (setter) => (e) => {
+    const value = e.target.value;
+    if (containsHtml(value)) return;
+    setter(value);
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {error && <ErrorMessage message={error} />}
@@ -29,7 +37,7 @@ const RegisterForm = ({
         label="Full Name"
         type="text"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={handleSafeChange(setName)}
         placeholder="ELIA WILLIAM MARIKI"
         required
         icon={FaUser}
@@ -42,7 +50,7 @@ const RegisterForm = ({
         label="Username"
         type="text"
         value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        onChange={handleSafeChange(setUsername)}
         placeholder="dawillygene"
         required
         icon={FaUserShield}
@@ -55,7 +63,7 @@ const RegisterForm = ({
         label="Email Address"
         type="email"
         value={registerEmail}
-        onChange={(e) => setRegisterEmail(e.target.value)}
+        onChange={handleSafeChange(setRegisterEmail)}
         placeholder="admin@udom.ac.tz"
         required
         icon={FaUserShield}
@@ -68,7 +76,7 @@ const RegisterForm = ({
         label="Department"
         type="text"
         value={department}
-        onChange={(e) => setDepartment(e.target.value)}
+        onChange={handleSafeChange(setDepartment)}
         placeholder="Computer Science"
         required
         icon={FaBuilding}
@@ -81,7 +89,7 @@ const RegisterForm = ({
         label="Password"
         type="password"
         value={registerPassword}
-        onChange={(e) => setRegisterPassword(e.target.value)}
+        onChange={handleSafeChange(setRegisterPassword)}
         placeholder="••••••••"
         required
         icon={FaLock}
@@ -94,7 +102,7 @@ const RegisterForm = ({
         label="Confirm Password"
         type="password"
         value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
+        onChange={handleSafeChange(setConfirmPassword)}
         placeholder="••••••••"
         required
         icon={FaLock}

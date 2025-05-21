@@ -13,6 +13,20 @@ const LoginForm = ({
   onSwitchToRegister,
   onSubmit
 }) => {
+  const containsScript = (str) => /<\s*script/gi.test(str);
+
+  const handleUsernameChange = (e) => {
+    const value = e.target.value;
+    if (containsScript(value)) return;
+    setUsername(value);
+  };
+
+  const handlePasswordChange = (e) => {
+    const value = e.target.value;
+    if (containsScript(value)) return;
+    setPassword(value);
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       {error && <ErrorMessage message={error} />}
@@ -21,7 +35,7 @@ const LoginForm = ({
         label="Username"
         type="text"
         value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        onChange={handleUsernameChange}
         placeholder="dawillygene"
         required
         icon={FaUserShield}
@@ -34,7 +48,7 @@ const LoginForm = ({
         label="Password"
         type="password"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={handlePasswordChange}
         placeholder="••••••••"
         required
         icon={FaLock}

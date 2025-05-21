@@ -1,7 +1,6 @@
-import { time } from "framer-motion";
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import API, { attachJwtInterceptor } from "../utils/axios";
+import { attachJwtInterceptor } from "../utils/axios";
 
 const AuthContext = createContext();
 export const AppProvider = ({ children }) => {
@@ -21,16 +20,18 @@ export const AppProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         setJwt(data.accessToken);
-        console.log(data.accessToken);
         return data.accessToken;
       } else {
         setJwt(null);
-        // Do NOT navigate here!
         return null;
       }
-    } catch (err) {
+    } catch {
+   
+      if (process.env.NODE_ENV === "development") {
+            console.error("Token refresh failed");
+      }
+
       setJwt(null);
-      // Do NOT navigate here!
       return null;
     }
   }, []);
@@ -44,7 +45,6 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    // Only redirect if loading is false and jwt is still null
     if (!loading && !jwt) {
       navigate("/login");
     }
@@ -52,7 +52,6 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     attachJwtInterceptor(() => jwt);
-    console.log("JWT interceptor attached");
   }, [jwt]);
 
   return (

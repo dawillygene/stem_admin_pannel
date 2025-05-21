@@ -12,6 +12,16 @@ const InputField = ({
   id,
   name
 }) => {
+  const containsScript = (str) => /<\s*script/gi.test(str);
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    if (containsScript(value)) {
+      return;
+    }
+    onChange(e);
+  };
+
   return (
     <div>
       {label && (
@@ -30,7 +40,7 @@ const InputField = ({
           name={name}
           type={type}
           value={value}
-          onChange={onChange}
+          onChange={handleChange}
           className={`${Icon ? 'pl-10' : 'pl-4'} block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-[#0066CC] focus:border-[#0066CC] bg-gray-50`}
           placeholder={placeholder}
           required={required}
