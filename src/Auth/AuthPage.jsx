@@ -25,7 +25,7 @@ const AuthPage = () => {
 
   useEffect(() => {
     if (jwt) {
-      const lastRoute = sessionStorage.getItem("lastRoute") || "/home";
+      const lastRoute = localStorage.getItem("lastRoute") || "/home";
       navigate(lastRoute, { replace: true });
     }
   }, [jwt, navigate]);

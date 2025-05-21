@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import AdminList from "./pages/AdminList/AdminList";
@@ -10,8 +10,18 @@ import NormalAdminDashboard from "./pages/NormalAdminDashboard";
 import GalleryAdmin from "./components/Gallery/GalleryAdmin";
 import MainLayout from "./Layout/MainLayout";
 import ProtectedRoute from "./Context/ProtectedRoute";
+import Comments from "./components/CommentCard";
+import { useEffect } from "react";
 
 function App() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname !== "/login") {
+      localStorage.setItem("lastRoute", location.pathname);
+    }
+  }, [location]);
+
   return (
     <Routes>
       <Route path="/login" element={<Auth />} />
@@ -25,6 +35,7 @@ function App() {
                 <Route path="/dashboard" element={<Home />} />
                 <Route path="/super-admin" element={<SuperAdminDashboard />} />
                 <Route path="/admins" element={<AdminList />} />
+                <Route path="/comments" element={<Comments />} />
                 <Route path="/gallery" element={<GalleryAdmin />} />
                 <Route path="/blogs" element={<BlogUpload />} />
                 <Route path="/profile" element={<Profile />} />
