@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaUpload, FaImage, FaFilePdf, FaTimes, FaCheck, FaEdit, FaTags, FaCalendarAlt, FaListUl } from "react-icons/fa";
+import API from "../utils/axios";
 
 const BlogUpload = () => {
   const [blogTitle, setBlogTitle] = useState("");
@@ -71,25 +72,35 @@ const BlogUpload = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log({ 
-        blogTitle, 
-        blogContent, 
-        picture, 
-        publication, 
-        category,
+      // If you want to upload files, you must upload them separately and get their URLs first.
+      // Here, we assume you have image and document URLs, not files.
+      const payload = {
+        title: blogTitle,
+        content: blogContent,
+        // image: picture ? picture : "https://example.com/images/stem_image.jpg",
+        image: "https://example.com/images/stem_image.jpg",  
+        alt: blogTitle || "STEM education image",
+        // documentUrl: publication ? publication : null,
+        documentUrl: null,
+        category: category ? { id: "technology" } : "technology",
         tags,
         publishDate,
-        isDraft
-      });
-      
+        isDraft,
+      };
+console.log("Payload to be sent:", payload);
+
+      const response = await API.post("/blog/posts", payload);
+
+      console.log("Response from server:", response);
+
+      if (response.status !== 200 && response.status !== 201) {
+        throw new Error("Failed to upload blog post");
+      }
+
       setSuccessMessage(true);
-      
-      // Reset form after 2 seconds
+
       setTimeout(() => {
         setBlogTitle("");
         setBlogContent("");
@@ -103,7 +114,6 @@ const BlogUpload = () => {
         setSuccessMessage(false);
       }, 2000);
     } catch (error) {
-      console.error("Error submitting blog:", error);
       alert("An error occurred while submitting. Please try again.");
     } finally {
       setIsSubmitting(false);
