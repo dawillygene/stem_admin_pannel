@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaComment, FaTrash, FaCheck, FaSearch, FaFilter, FaSort, FaTimes, FaChartBar, FaCalendarAlt, FaUser } from "react-icons/fa";
+import DOMPurify from 'dompurify'; // Import DOMPurify for sanitization
 
 const Comments = () => {
   const [comments, setComments] = useState([
@@ -80,23 +81,63 @@ const Comments = () => {
     setFilteredComments(result);
   }, [comments, searchTerm, statusFilter, sortOrder]);
 
+  // Input validation helpers
+  const containsScript = (str) => /<[^>]*>|\${|\(\)|\[\]|javascript:|on\w+\s*=|alert\(|document\.|window\.|eval\(|setTimeout\(|setInterval\(/gi.test(str);
+  
+  const sanitizeInput = (input) => {
+    // Basic sanitization to prevent script injection
+    const sanitized = typeof input === 'string' ? 
+      input.replace(/<[^>]*>|\${|\(\)|\[\]|javascript:|on\w+\s*=|alert\(|document\.|window\.|eval\(|setTimeout\(|setInterval\(/gi, '') : 
+      '';
+    return sanitized.trim();
+  };
+  
+  const validateInput = (input, maxLength = 1000) => {
+    if (!input || typeof input !== 'string') return false;
+    const sanitized = sanitizeInput(input);
+    return sanitized.length > 0 && sanitized.length <= maxLength;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewComment((prev) => ({ ...prev, [name]: value }));
+    
+    // Validate input to prevent script injection
+    if (containsScript(value)) {
+      alert("Invalid input detected. Please avoid using special characters or HTML tags.");
+      return;
+    }
+    
+    // Apply character limits based on field
+    const maxLengths = {
+      text: 1000,    // Max 1000 chars for comment text
+      author: 50,    // Max 50 chars for author names
+      post: 100      // Max 100 chars for post titles
+    };
+    
+    if (value.length > maxLengths[name]) {
+      alert(`${name.charAt(0).toUpperCase() + name.slice(1)} must be less than ${maxLengths[name]} characters.`);
+      return;
+    }
+    
+    setNewComment((prev) => ({ ...prev, [name]: sanitizeInput(value) }));
   };
 
   const handleAddComment = (e) => {
     e.preventDefault();
-    if (!newComment.text || !newComment.author || !newComment.post) {
-      alert("Please fill in all fields.");
+    
+    // Validate all input fields
+    if (!validateInput(newComment.text, 1000) || 
+        !validateInput(newComment.author, 50) || 
+        !validateInput(newComment.post, 100)) {
+      alert("Please fill in all fields with valid content.");
       return;
     }
 
     const comment = {
       id: comments.length + 1,
-      text: newComment.text,
-      author: newComment.author,
-      post: newComment.post,
+      text: sanitizeInput(newComment.text),
+      author: sanitizeInput(newComment.author),
+      post: sanitizeInput(newComment.post),
       date: new Date().toISOString().split("T")[0],
       status: "pending",
     };
@@ -107,6 +148,8 @@ const Comments = () => {
   };
 
   const handleApproveComment = (id) => {
+    if (typeof id !== 'number') return; // Validate ID is a number
+    
     setComments((prev) =>
       prev.map((comment) =>
         comment.id === id ? { ...comment, status: "approved" } : comment
@@ -115,8 +158,16 @@ const Comments = () => {
   };
 
   const handleDeleteComment = (id) => {
+    if (typeof id !== 'number') return; // Validate ID is a number
+    
     if (!window.confirm(`Are you sure you want to delete this comment?`)) return;
     setComments((prev) => prev.filter((comment) => comment.id !== id));
+  };
+
+  const handleSearchChange = (e) => {
+    // Sanitize search input
+    const value = sanitizeInput(e.target.value);
+    setSearchTerm(value);
   };
 
   // Animation variants
@@ -211,6 +262,7 @@ const Comments = () => {
                     value={newComment.text}
                     onChange={handleInputChange}
                     placeholder="Write your comment..."
+                    maxLength={1000} // Add maxLength attribute
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-[#0066CC]"
                   />
                 </div>
@@ -223,6 +275,7 @@ const Comments = () => {
                       value={newComment.author}
                       onChange={handleInputChange}
                       placeholder="Author's name"
+                      maxLength={50} // Add maxLength attribute
                       className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-[#0066CC]"
                     />
                   </div>
@@ -234,6 +287,7 @@ const Comments = () => {
                       value={newComment.post}
                       onChange={handleInputChange}
                       placeholder="Post title"
+                      maxLength={100} // Add maxLength attribute
                       className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-[#0066CC]"
                     />
                   </div>
@@ -269,7 +323,8 @@ const Comments = () => {
                 type="text"
                 placeholder="Search comments, authors, or posts..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
+                maxLength={100} // Add maxLength attribute
                 className="pl-10 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-[#0066CC]"
               />
             </div>
@@ -336,13 +391,22 @@ const Comments = () => {
                     transition={{ duration: 0.3 }}
                   >
                     <td className="px-6 py-4">
-                      <div className="text-sm line-clamp-2">{comment.text}</div>
+                      {/* Safely render comment text */}
+                      <div className="text-sm line-clamp-2">
+                        {comment.text}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-[#0066CC]">{comment.author}</div>
+                      {/* Safely render author name */}
+                      <div className="text-sm font-medium text-[#0066CC]">
+                        {comment.author}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-700">{comment.post}</div>
+                      {/* Safely render post title */}
+                      <div className="text-sm text-gray-700">
+                        {comment.post}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-500">{comment.date}</div>
