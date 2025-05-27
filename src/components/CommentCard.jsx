@@ -1,58 +1,90 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaComment, FaTrash, FaCheck, FaSearch, FaFilter, FaSort, FaTimes, FaChartBar, FaCalendarAlt, FaUser } from "react-icons/fa";
-import DOMPurify from 'dompurify'; // Import DOMPurify for sanitization
+import { FaComment, FaTrash, FaCheck, FaSearch, FaFilter, FaSort, FaTimes, FaCalendarAlt, FaUser } from "react-icons/fa";
+import { useParams } from "react-router-dom";
+import API from "../utils/axios";
 
 const Comments = () => {
-  const [comments, setComments] = useState([
-    { 
-      id: 1, 
-      text: "This article on mathematics teaching methods is very insightful.", 
-      author: "elly", 
-      date: "2025-04-15", 
-      status: "pending",
-      post: "Innovative Methods for Teaching Mathematics"
-    },
-    { 
-      id: 2, 
-      text: "Great resource for science teachers! The laboratory setup guide is exactly what our school needed.", 
-      author: "dawwilly", 
-      date: "2025-04-16", 
-      status: "approved",
-      post: "Setting Up Effective Science Laboratories"
-    },
-    { 
-      id: 3, 
-      text: "I would like to see more content about integrating technology in STEM education.", 
-      author: "abdulswamad", 
-      date: "2025-04-17", 
-      status: "pending",
-      post: "The Future of STEM Education in Tanzania"
-    },
-    { 
-      id: 4, 
-      text: "The statistics in this article seem outdated.", 
-      author: "maria", 
-      date: "2025-04-18", 
-      status: "pending",
-      post: "STEM Education Statistics in East Africa"
-    },
-    { 
-      id: 5, 
-      text: "Thank you for highlighting the gender gap in science education.", 
-      author: "john", 
-      date: "2025-04-19", 
-      status: "approved",
-      post: "Addressing Gender Gaps in STEM"
-    },
-  ]);
+  const [comments, setComments] = useState([]);
   const [filteredComments, setFilteredComments] = useState([]);
   const [newComment, setNewComment] = useState({ text: "", author: "", post: "" });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [sortOrder, setSortOrder] = useState("newest");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { blogId } = useParams(); // Get blogId from URL if your routing supports it
 
+  // Fetch comments for the current blog post
+  useEffect(() => {
+    const fetchComments = async () => {
+      setIsLoading(true);
+      console.log("Fetching comments from API");
+      
+      try {
+        // Use the pending comments endpoint as primary source for this admin page
+        const url = blogId 
+          ? `/admin/comments/post/${blogId}`
+          : `/admin/comments/pending`;  // Updated to use the pending endpoint
+      
+        console.log(`Calling API endpoint: ${url}`);
+        
+        // Make the API request
+        const response = await API.get(url);
+        console.log("API response:", response.data);
+        
+        // Transform API response to match your component's expected format
+        const formattedComments = response.data.map(comment => ({
+          id: comment.id,
+          text: comment.content,
+          author: comment.guestAuthorName || "Anonymous User",
+          date: new Date(comment.createdAt).toISOString().split("T")[0],
+          status: comment.approved ? "approved" : "pending",
+          post: "Current Post",
+          approvedAt: comment.approvedAt,
+          approvedBy: comment.approvedBy
+        }));
+        
+        setComments(formattedComments);
+        setFilteredComments(formattedComments);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching comments:", err);
+        
+        // Handle different error scenarios
+        if (err.response) {
+          switch (err.response.status) {
+            case 401:
+              setError("Authentication required. Please log in to view comments.");
+              break;
+            case 403:
+              setError("You don't have permission to access these comments. Admin privileges are required.");
+              break;
+            case 404:
+              setError("Blog post not found.");
+              break;
+            default:
+              setError(`Server error: ${err.response.data?.message || "Unknown error"}`);
+          }
+        } else if (err.request) {
+          setError("Network error. Please check your connection and try again.");
+        } else {
+          setError(`Error: ${err.message}`);
+        }
+        
+        setComments([]);
+        setFilteredComments([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Fetch comments on mount or when blogId changes
+    fetchComments();
+  }, [blogId]);
+
+  // Filter and sort comments
   useEffect(() => {
     let result = [...comments];
     
@@ -61,8 +93,7 @@ const Comments = () => {
       result = result.filter(
         comment => 
           comment.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          comment.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          comment.post.toLowerCase().includes(searchTerm.toLowerCase())
+          comment.author.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
@@ -98,6 +129,7 @@ const Comments = () => {
     return sanitized.length > 0 && sanitized.length <= maxLength;
   };
 
+  // Input handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
@@ -122,46 +154,96 @@ const Comments = () => {
     setNewComment((prev) => ({ ...prev, [name]: sanitizeInput(value) }));
   };
 
-  const handleAddComment = (e) => {
-    e.preventDefault();
+  // API actions with mock data support
+  const handleApproveComment = async (id) => {
+    if (typeof id !== 'number') return;
     
-    // Validate all input fields
-    if (!validateInput(newComment.text, 1000) || 
-        !validateInput(newComment.author, 50) || 
-        !validateInput(newComment.post, 100)) {
-      alert("Please fill in all fields with valid content.");
-      return;
+    try {
+      console.log(`Approving comment #${id}`);
+      
+      // Call the correct API endpoint for comment approval
+      const response = await API.put(`/admin/comments/approve/${id}`);
+      
+      console.log("Approval response:", response.data);
+      
+      // Show success message
+      if (response.data?.message) {
+        // You could use a toast notification library here instead of alert
+        alert(response.data.message);
+      }
+      
+      // Update local state to reflect the change
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === id ? { 
+            ...comment, 
+            status: "approved",
+            approvedAt: new Date().toISOString(),
+            // The backend will set the approver from the security context
+          } : comment
+        )
+      );
+      
+      // Optional: If you want comments to disappear from the pending list after approval
+      if (!blogId) {  // Only if we're in the "pending comments" view
+        setComments((prev) => prev.filter((comment) => comment.id !== id));
+        setFilteredComments((prev) => prev.filter((comment) => comment.id !== id));
+      }
+      
+    } catch (err) {
+      console.error("Error approving comment:", err);
+      
+      // Enhanced error handling based on API documentation
+      if (err.response) {
+        switch (err.response.status) {
+          case 401:
+            alert("Authentication required. Please log in to approve comments.");
+            break;
+          case 403:
+            alert("You don't have permission to approve comments. Admin privileges required.");
+            break;
+          case 404:
+            alert(err.response.data?.message || "Comment not found.");
+            break;
+          case 500:
+            alert(err.response.data?.message || "Server error while approving comment.");
+            break;
+          default:
+            alert(`Error: ${err.response.data?.message || "Unknown error"}`);
+        }
+      } else if (err.request) {
+        alert("Network error. Please check your connection and try again.");
+      } else {
+        alert(`Error: ${err.message}`);
+      }
     }
-
-    const comment = {
-      id: comments.length + 1,
-      text: sanitizeInput(newComment.text),
-      author: sanitizeInput(newComment.author),
-      post: sanitizeInput(newComment.post),
-      date: new Date().toISOString().split("T")[0],
-      status: "pending",
-    };
-
-    setComments((prev) => [...prev, comment]);
-    setNewComment({ text: "", author: "", post: "" });
-    setIsAddingComment(false);
   };
 
-  const handleApproveComment = (id) => {
-    if (typeof id !== 'number') return; // Validate ID is a number
-    
-    setComments((prev) =>
-      prev.map((comment) =>
-        comment.id === id ? { ...comment, status: "approved" } : comment
-      )
-    );
-  };
-
-  const handleDeleteComment = (id) => {
-    if (typeof id !== 'number') return; // Validate ID is a number
+  const handleDeleteComment = async (id) => {
+    if (typeof id !== 'number') return;
     
     if (!window.confirm(`Are you sure you want to delete this comment?`)) return;
-    setComments((prev) => prev.filter((comment) => comment.id !== id));
+    
+    try {
+      // For testing without API
+      const useMockApi = true;
+      
+      if (useMockApi) {
+        // Mock deletion with a delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log(`Mock deleted comment #${id}`);
+      } else {
+        // Real API call using axios for DELETE operations
+        await API.delete(`/api/admin/comments/${id}`);
+      }
+      
+      // Update local state
+      setComments((prev) => prev.filter((comment) => comment.id !== id));
+      setFilteredComments((prev) => prev.filter((comment) => comment.id !== id));
+    } catch (err) {
+      console.error("Error deleting comment:", err);
+      alert("Failed to delete comment. Please try again.");
+    }
   };
 
   const handleSearchChange = (e) => {
@@ -177,6 +259,36 @@ const Comments = () => {
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
   };
 
+  // Loading and error states
+  if (isLoading) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl shadow-md text-center">
+          <div className="w-16 h-16 border-4 border-t-[#0066CC] border-[#0066CC]/20 border-solid rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading comments...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl shadow-md text-center max-w-md">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-[#0066CC] text-white px-4 py-2 rounded-lg hover:bg-[#0066CC]/90"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
@@ -186,18 +298,6 @@ const Comments = () => {
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-[#0066CC]">Comments Management</h1>
               <p className="text-gray-600 mt-1">Review and manage user comments across the platform</p>
-            </div>
-            
-            <div className="mt-4 md:mt-0">
-              <motion.button
-                onClick={() => setIsAddingComment(!isAddingComment)}
-                className="bg-[#FFAD03] hover:bg-[#FFAD03]/90 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                {isAddingComment ? <FaTimes className="mr-2" /> : <FaComment className="mr-2" />}
-                {isAddingComment ? "Cancel" : "Add Comment"}
-              </motion.button>
             </div>
           </div>
           
@@ -243,70 +343,6 @@ const Comments = () => {
           </div>
         </div>
 
-        {/* Adding New Comments Form */}
-        <AnimatePresence>
-          {isAddingComment && (
-            <motion.div 
-              className="bg-white shadow-lg rounded-xl p-6 mb-6 border-l-4 border-[#0066CC]"
-              {...fadeIn}
-            >
-              <h3 className="text-xl font-semibold mb-4 text-[#0066CC] flex items-center">
-                <FaComment className="mr-2" /> Add New Comment
-              </h3>
-              <form onSubmit={handleAddComment} className="grid gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Comment Text</label>
-                  <textarea
-                    name="text"
-                    rows="3"
-                    value={newComment.text}
-                    onChange={handleInputChange}
-                    placeholder="Write your comment..."
-                    maxLength={1000} // Add maxLength attribute
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-[#0066CC]"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
-                    <input
-                      name="author"
-                      type="text"
-                      value={newComment.author}
-                      onChange={handleInputChange}
-                      placeholder="Author's name"
-                      maxLength={50} // Add maxLength attribute
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-[#0066CC]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Related Post</label>
-                    <input
-                      name="post"
-                      type="text"
-                      value={newComment.post}
-                      onChange={handleInputChange}
-                      placeholder="Post title"
-                      maxLength={100} // Add maxLength attribute
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-[#0066CC]"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <motion.button
-                    type="submit"
-                    className="bg-[#0066CC] hover:bg-[#0066CC]/90 text-white px-6 py-2 rounded-lg flex items-center transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <FaCheck className="mr-2" /> Submit Comment
-                  </motion.button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Filters and Search */}
         <motion.div 
           className="bg-white shadow-md rounded-xl p-4 mb-6"
@@ -324,7 +360,7 @@ const Comments = () => {
                 placeholder="Search comments, authors, or posts..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                maxLength={100} // Add maxLength attribute
+                maxLength={100}
                 className="pl-10 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-[#0066CC]"
               />
             </div>
@@ -375,7 +411,6 @@ const Comments = () => {
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-medium">Comment</th>
                   <th className="px-6 py-4 text-left text-sm font-medium">Author</th>
-                  <th className="px-6 py-4 text-left text-sm font-medium">Post</th>
                   <th className="px-6 py-4 text-left text-sm font-medium">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-medium">Status</th>
                   <th className="px-6 py-4 text-left text-sm font-medium">Actions</th>
@@ -391,21 +426,13 @@ const Comments = () => {
                     transition={{ duration: 0.3 }}
                   >
                     <td className="px-6 py-4">
-                      {/* Safely render comment text */}
                       <div className="text-sm line-clamp-2">
                         {comment.text}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {/* Safely render author name */}
                       <div className="text-sm font-medium text-[#0066CC]">
                         {comment.author}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {/* Safely render post title */}
-                      <div className="text-sm text-gray-700">
-                        {comment.post}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -458,30 +485,12 @@ const Comments = () => {
                     setSearchTerm("");
                     setStatusFilter("all");
                   }}
-                  className="mt-2 text-[#0066CC] hover:underline"
+                  className="mt-4 bg-[#0066CC] text-white px-4 py-2 rounded-lg hover:bg-[#0066CC]/90"
                 >
-                  Clear filters
+                  Show All Comments
                 </button>
               </div>
             )}
-          </div>
-          
-          {/* Comments Statistics */}
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <div className="flex flex-wrap gap-5 text-sm text-gray-600">
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-[#0066CC] mr-2"></div>
-                <span>Total: {comments.length}</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
-                <span>Pending: {comments.filter(c => c.status === "pending").length}</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                <span>Approved: {comments.filter(c => c.status === "approved").length}</span>
-              </div>
-            </div>
           </div>
         </motion.div>
       </div>
