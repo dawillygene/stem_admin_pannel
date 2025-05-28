@@ -5,7 +5,7 @@ const SidebarHeader = () => (
     <FaUniversity className="text-2xl mr-3 text-[#FFAD03]" />
     <div>
       <h2 className="text-xl font-bold">STEM</h2>
-      <p className="text-xs text-blue-200">Admin Portal</p>
+      <p className="text-xs text-blue-200">Dashboard</p>
     </div>
   </div>
 );

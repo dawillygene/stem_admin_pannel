@@ -13,7 +13,7 @@ const SidebarLogout = ({ handleLogout }) => (
       <span>Logout</span>
     </motion.button>
     <div className="mt-4 text-center">
-      <p className="text-xs text-blue-200">© 2025 University of Dodoma</p>
+      <p className="text-xs text-blue-200">© 2025 STEM EDUCATION</p>
     </div>
   </div>
 );
