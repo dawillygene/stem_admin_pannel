@@ -225,24 +225,48 @@ const Comments = () => {
     if (!window.confirm(`Are you sure you want to delete this comment?`)) return;
     
     try {
-      // For testing without API
-      const useMockApi = true;
+      console.log(`Deleting comment #${id}`);
       
-      if (useMockApi) {
-        // Mock deletion with a delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        console.log(`Mock deleted comment #${id}`);
-      } else {
-        // Real API call using axios for DELETE operations
-        await API.delete(`/api/admin/comments/${id}`);
+      // Call the correct API endpoint for comment deletion
+      const response = await API.delete(`/admin/comments/delete/${id}`);
+      
+      console.log("Deletion response:", response.data);
+      
+      // Show success message
+      if (response.data?.message) {
+        alert(response.data.message);
       }
       
-      // Update local state
+      // Update local state by removing the deleted comment
       setComments((prev) => prev.filter((comment) => comment.id !== id));
       setFilteredComments((prev) => prev.filter((comment) => comment.id !== id));
+      
     } catch (err) {
       console.error("Error deleting comment:", err);
-      alert("Failed to delete comment. Please try again.");
+      
+      // Enhanced error handling based on API documentation
+      if (err.response) {
+        switch (err.response.status) {
+          case 401:
+            alert("Authentication required. Please log in to delete comments.");
+            break;
+          case 403:
+            alert("You don't have permission to delete comments. Admin privileges required.");
+            break;
+          case 404:
+            alert(err.response.data?.message || "Comment not found.");
+            break;
+          case 500:
+            alert(err.response.data?.message || "Server error while deleting comment.");
+            break;
+          default:
+            alert(`Error: ${err.response.data?.message || "Unknown error"}`);
+        }
+      } else if (err.request) {
+        alert("Network error. Please check your connection and try again.");
+      } else {
+        alert(`Error: ${err.message}`);
+      }
     }
   };
 

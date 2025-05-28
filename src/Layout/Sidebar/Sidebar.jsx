@@ -56,10 +56,13 @@ const Sidebar = () => {
     { path: "/home", icon: "FaHome", label: "Home" },
     { path: "/super-admin", icon: "FaChartBar", label: "Dashboard" },
     { path: "/admins", icon: "FaUsers", label: "Admins" },
-    { path: "/comments", icon: "FaComment", label: "Comments" },
+    { path: "/post/comment", icon: "FaComment", label: "Post Comment" },
+    { path: "/comments", icon: "FaComment", label: "Comments statistics" },
     { path: "/blogs", icon: "FaFileUpload", label: "Blogs & Publications" },
     { path: "/gallery", icon: "FaImage", label: "Gallery" },
     { path: "/profile", icon: "FaUser", label: "Profile" },
+
+
   ];
 
   return (

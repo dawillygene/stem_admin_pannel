@@ -11,7 +11,9 @@ import GalleryAdmin from "./components/Gallery/GalleryAdmin";
 import MainLayout from "./Layout/MainLayout";
 import ProtectedRoute from "./Context/ProtectedRoute";
 import Comments from "./components/CommentCard";
+import BlogComments from './pages/BlogComments';
 import { useEffect } from "react";
+import { i } from "framer-motion/client";
 
 function App() {
   const location = useLocation();
@@ -35,10 +37,12 @@ function App() {
                 <Route path="/dashboard" element={<Home />} />
                 <Route path="/super-admin" element={<SuperAdminDashboard />} />
                 <Route path="/admins" element={<AdminList />} />
+                <Route path="/post/comment" element={<BlogComments />} />
                 <Route path="/comments" element={<Comments />} />
                 <Route path="/gallery" element={<GalleryAdmin />} />
                 <Route path="/blogs" element={<BlogUpload />} />
                 <Route path="/profile" element={<Profile />} />
+                
                 <Route path="/normal-admin" element={<NormalAdminDashboard />} />
               </Routes>
             </MainLayout>
