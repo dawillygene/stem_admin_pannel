@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
@@ -7,6 +6,7 @@ import AdminList from "./pages/AdminList/AdminList";
 import BlogUpload from "./pages/BlogUpload";
 import BlogList from "./pages/BlogList";
 import BlogEdit from "./pages/BlogEdit";
+import BlogComments from "./pages/BlogComments";
 import Profile from "./pages/Profile/Profile";
 import Auth from "./Auth/AuthPage";
 import NormalAdminDashboard from "./pages/NormalAdminDashboard";
@@ -14,7 +14,6 @@ import GalleryAdmin from "./components/Gallery/GalleryAdmin";
 import MainLayout from "./Layout/MainLayout";
 import ProtectedRoute from "./Context/ProtectedRoute";
 import Comments from "./components/CommentCard";
-import BlogComments from './pages/BlogComments';
 import { useEffect } from "react";
 
 function App() {
@@ -39,8 +38,8 @@ function App() {
                     <Route path="/dashboard" element={<Home />} />
                     <Route path="/super-admin" element={<SuperAdminDashboard />} />
                     <Route path="/admins" element={<AdminList />} />
-                    <Route path="/post/comment" element={<BlogComments />} />
                     <Route path="/comments" element={<Comments />} />
+                    <Route path="/blog-comments" element={<BlogComments />} />
                     <Route path="/gallery" element={<GalleryAdmin />} />
                     <Route path="/blogs" element={<BlogUpload />} />
                     <Route path="/blogs/create" element={<BlogUpload />} />

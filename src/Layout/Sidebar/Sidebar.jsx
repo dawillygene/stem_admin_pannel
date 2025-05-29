@@ -1,8 +1,10 @@
 import { useAuth } from "../../Context/AppProvier";
+import { useToast } from "../../components/Toast";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import API from "../../utils/axios";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import SidebarHeader from "./SidebarHeader";
 import SidebarUser from "./SidebarUser";
 import SidebarNav from "./SidebarNav";
@@ -11,12 +13,14 @@ import SidebarMobileHeader from "./SidebarMobileHeader";
 import SidebarMobileBackdrop from "./SidebarMobileBackdrop";
 
 const Sidebar = () => {
-  const { jwt } = useAuth();
+  const { jwt, logout } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [user, setUser] = useState({ name: "" });
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -42,13 +46,16 @@ const Sidebar = () => {
   }, []);
 
   const handleLogout = async () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      try {
-        await API.post("/auth/logout");
-        window.location.href = "/login";
-      } catch {
-        alert("Logout failed. Please try again.");
-      }
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      await logout();
+      // Redirect will be handled by the auth context
+    } catch (error) {
+      console.error("Logout error:", error);
+      showToast("Logout failed. Please try again.", "error");
     }
   };
 
@@ -58,6 +65,7 @@ const Sidebar = () => {
     { path: "/admins", icon: "FaUsers", label: "Admins" },
     { path: "/post/comment", icon: "FaComment", label: "Post Comment" },
     { path: "/comments", icon: "FaComment", label: "Comments statistics" },
+    { path: "/blog-comments", icon: "FaComment", label: "Blog Comments" },
     {
       path: "/blogs",
       icon: "FaFileUpload",
@@ -92,6 +100,18 @@ const Sidebar = () => {
         </AnimatePresence>
         <SidebarMobileBackdrop isMobile={isMobile} isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className="hidden md:block md:ml-64" />
+        
+        {/* Logout Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showLogoutModal}
+          onClose={() => setShowLogoutModal(false)}
+          onConfirm={confirmLogout}
+          title="Confirm Logout"
+          message="Are you sure you want to log out? You will need to sign in again to access the dashboard."
+          confirmText="Logout"
+          cancelText="Cancel"
+          type="warning"
+        />
       </>
   );
 };

@@ -5,8 +5,11 @@ import {
   FaBookOpen, FaClock, FaBlog, FaList, FaArrowLeft 
 } from "react-icons/fa";
 import API from "../utils/axios";
+import { useToast } from "../components/Toast";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 const BlogComments = () => {
+  const { showToast } = useToast();
   const [blogPosts, setBlogPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [comments, setComments] = useState([]);
@@ -18,6 +21,7 @@ const BlogComments = () => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [error, setError] = useState(null);
   const [commentError, setCommentError] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, commentId: null });
   
   // Fetch all blog posts first
   useEffect(() => {
@@ -150,7 +154,9 @@ const BlogComments = () => {
       
       // Show success message
       if (response.data?.message) {
-        alert(response.data.message);
+        showToast(response.data.message, 'success');
+      } else {
+        showToast('Comment approved successfully!', 'success');
       }
       
       // Update local state
@@ -169,32 +175,30 @@ const BlogComments = () => {
       if (err.response) {
         switch (err.response.status) {
           case 401:
-            alert("Authentication required. Please log in to approve comments.");
+            showToast("Authentication required. Please log in to approve comments.", 'error');
             break;
           case 403:
-            alert("You don't have permission to approve comments. Admin privileges required.");
+            showToast("You don't have permission to approve comments. Admin privileges required.", 'error');
             break;
           case 404:
-            alert(err.response.data?.message || "Comment not found.");
+            showToast(err.response.data?.message || "Comment not found.", 'error');
             break;
           case 500:
-            alert(err.response.data?.message || "Server error while approving comment.");
+            showToast(err.response.data?.message || "Server error while approving comment.", 'error');
             break;
           default:
-            alert(`Error: ${err.response.data?.message || "Unknown error"}`);
+            showToast(`Error: ${err.response.data?.message || "Unknown error"}`, 'error');
         }
       } else if (err.request) {
-        alert("Network error. Please check your connection and try again.");
+        showToast("Network error. Please check your connection and try again.", 'error');
       } else {
-        alert(`Error: ${err.message}`);
+        showToast(`Error: ${err.message}`, 'error');
       }
     }
   };
 
   const handleDeleteComment = async (id) => {
     if (typeof id !== 'number') return;
-    
-    if (!window.confirm(`Are you sure you want to delete this comment?`)) return;
     
     try {
       console.log(`Deleting comment #${id}`);
@@ -206,7 +210,9 @@ const BlogComments = () => {
       
       // Show success message
       if (response.data?.message) {
-        alert(response.data.message);
+        showToast(response.data.message, 'success');
+      } else {
+        showToast('Comment deleted successfully!', 'success');
       }
       
       // Update local state
@@ -218,24 +224,24 @@ const BlogComments = () => {
       if (err.response) {
         switch (err.response.status) {
           case 401:
-            alert("Authentication required. Please log in to delete comments.");
+            showToast("Authentication required. Please log in to delete comments.", 'error');
             break;
           case 403:
-            alert("You don't have permission to delete comments. Admin privileges required.");
+            showToast("You don't have permission to delete comments. Admin privileges required.", 'error');
             break;
           case 404:
-            alert(err.response.data?.message || "Comment not found.");
+            showToast(err.response.data?.message || "Comment not found.", 'error');
             break;
           case 500:
-            alert(err.response.data?.message || "Server error while deleting comment.");
+            showToast(err.response.data?.message || "Server error while deleting comment.", 'error');
             break;
           default:
-            alert(`Error: ${err.response.data?.message || "Unknown error"}`);
+            showToast(`Error: ${err.response.data?.message || "Unknown error"}`, 'error');
         }
       } else if (err.request) {
-        alert("Network error. Please check your connection and try again.");
+        showToast("Network error. Please check your connection and try again.", 'error');
       } else {
-        alert(`Error: ${err.message}`);
+        showToast(`Error: ${err.message}`, 'error');
       }
     }
   };
@@ -610,7 +616,7 @@ const BlogComments = () => {
                               </motion.button>
                             )}
                             <motion.button
-                              onClick={() => handleDeleteComment(comment.id)}
+                              onClick={() => setConfirmModal({ isOpen: true, commentId: comment.id })}
                               className="bg-red-100 text-red-700 hover:bg-red-200 p-2 rounded-lg transition-colors"
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
@@ -643,6 +649,22 @@ const BlogComments = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        
+        {/* Confirmation Modal for Deletion */}
+        <ConfirmationModal
+          isOpen={confirmModal.isOpen}
+          onClose={() => setConfirmModal({ isOpen: false, commentId: null })}
+          onConfirm={() => {
+            if (confirmModal.commentId) {
+              handleDeleteComment(confirmModal.commentId);
+            }
+            setConfirmModal({ isOpen: false, commentId: null });
+          }}
+          title="Delete Comment"
+          message="Are you sure you want to delete this comment? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

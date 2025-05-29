@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import GalleryUploadForm from './GalleryUploadForm';
 import GalleryEditForm from './GalleryEditForm';
 import GalleryItemsList from './GalleryItemsList';
+import ConfirmationModal from '../ConfirmationModal';
 
 const GalleryAdmin = () => {
   const [galleryItems, setGalleryItems] = useState([]);
   const [view, setView] = useState('list'); // 'list', 'add', 'edit'
   const [selectedItem, setSelectedItem] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, itemId: null });
 
   // Mock function to load data - in a real app, this would be an API call
   useEffect(() => {
@@ -53,15 +55,18 @@ const GalleryAdmin = () => {
   };
 
   const handleDeleteItem = (id) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      setIsLoading(true);
-      // Simulate API delay
-      setTimeout(() => {
-        const filteredItems = galleryItems.filter(item => item.id !== id);
-        setGalleryItems(filteredItems);
-        setIsLoading(false);
-      }, 500);
-    }
+    setConfirmModal({ isOpen: true, itemId: id });
+  };
+
+  const confirmDelete = () => {
+    const { itemId } = confirmModal;
+    setIsLoading(true);
+    // Simulate API delay
+    setTimeout(() => {
+      const filteredItems = galleryItems.filter(item => item.id !== itemId);
+      setGalleryItems(filteredItems);
+      setIsLoading(false);
+    }, 500);
   };
 
   const handleEditClick = (item) => {
@@ -121,6 +126,20 @@ const GalleryAdmin = () => {
             onSubmit={handleUpdateItem} 
           />
         )}
+
+        {/* Confirmation Modal for Gallery Item Deletion */}
+        <ConfirmationModal
+          isOpen={confirmModal.isOpen}
+          onClose={() => setConfirmModal({ isOpen: false, itemId: null })}
+          onConfirm={() => {
+            confirmDelete();
+            setConfirmModal({ isOpen: false, itemId: null });
+          }}
+          title="Delete Gallery Item"
+          message="Are you sure you want to delete this gallery item? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

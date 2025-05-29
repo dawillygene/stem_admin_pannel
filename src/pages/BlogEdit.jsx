@@ -1,13 +1,14 @@
-
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaUpload, FaImage, FaFilePdf, FaTimes, FaCheck, FaEdit, FaTags, FaCalendarAlt, FaListUl, FaSave, FaArrowLeft } from "react-icons/fa";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import API from "../utils/axios";
+import { useToast } from "../components/Toast";
 
 const BlogEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [blogTitle, setBlogTitle] = useState("");
     const [blogContent, setBlogContent] = useState("");
@@ -47,7 +48,7 @@ const BlogEdit = () => {
             setPost(postData);
         } catch (error) {
             console.error("Error fetching post:", error);
-            alert("Failed to fetch post details");
+            showToast("Failed to fetch post details", "error");
             navigate("/blogs/view");
         } finally {
             setLoading(false);
@@ -64,7 +65,7 @@ const BlogEdit = () => {
             };
             reader.readAsDataURL(file);
         } else {
-            alert("Please select a valid image file.");
+            showToast("Please select a valid image file.", "error");
         }
     };
 
@@ -105,11 +106,11 @@ const BlogEdit = () => {
         } catch (error) {
             console.error("Error updating post:", error);
             if (error.response?.status === 403) {
-                alert("You are not authorized to update this post.");
+                showToast("You are not authorized to update this post.", "error");
             } else if (error.response?.status === 404) {
-                alert("Post not found.");
+                showToast("Post not found.", "error");
             } else {
-                alert("An error occurred while updating. Please try again.");
+                showToast("An error occurred while updating. Please try again.", "error");
             }
         } finally {
             setIsSubmitting(false);

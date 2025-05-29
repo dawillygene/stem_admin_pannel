@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { FaEdit, FaEye, FaTrash, FaSearch, FaFilter, FaCalendarAlt, FaUser, FaTags } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import API from "../utils/axios";
+import { useToast } from "../components/Toast";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 const BlogList = () => {
   const [posts, setPosts] = useState([]);
@@ -12,6 +14,8 @@ const BlogList = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, postId: null });
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetchPosts();
@@ -27,7 +31,7 @@ const BlogList = () => {
       setPosts(response.data);
     } catch (error) {
       console.error("Error fetching posts:", error);
-      alert("Failed to fetch posts");
+      showToast("Failed to fetch posts", "error");
     } finally {
       setLoading(false);
     }
@@ -77,15 +81,20 @@ const BlogList = () => {
   };
 
   const handleDelete = async (postId) => {
-    if (window.confirm("Are you sure you want to delete this post?")) {
-      try {
-        await API.delete(`/blog/posts/${postId}`);
-        setPosts(posts.filter(post => post.id !== postId));
-        alert("Post deleted successfully");
-      } catch (error) {
-        console.error("Error deleting post:", error);
-        alert("Failed to delete post");
-      }
+    setConfirmModal({ isOpen: true, postId });
+  };
+
+  const confirmDelete = async () => {
+    const { postId } = confirmModal;
+    try {
+      await API.delete(`/blog/posts/${postId}`);
+      setPosts(posts.filter(post => post.id !== postId));
+      showToast("Post deleted successfully", "success");
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      showToast("Failed to delete post", "error");
+    } finally {
+      setConfirmModal({ isOpen: false, postId: null });
     }
   };
 
@@ -279,6 +288,17 @@ const BlogList = () => {
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No posts found</h3>
             <p className="text-gray-500">Try adjusting your search or filters</p>
           </motion.div>
+        )}
+
+        {/* Confirmation Modal */}
+        {confirmModal.isOpen && (
+          <ConfirmationModal
+            isOpen={confirmModal.isOpen}
+            onClose={() => setConfirmModal({ isOpen: false, postId: null })}
+            onConfirm={confirmDelete}
+            title="Delete Post"
+            message="Are you sure you want to delete this post? This action cannot be undone."
+          />
         )}
       </div>
     </motion.div>

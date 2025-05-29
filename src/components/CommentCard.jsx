@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaComment, FaTrash, FaCheck, FaSearch, FaFilter, FaSort, FaTimes, FaCalendarAlt, FaUser } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import API from "../utils/axios";
+import { useToast } from "./Toast";
+import ConfirmationModal from "./ConfirmationModal";
 
 const Comments = () => {
   const [comments, setComments] = useState([]);
@@ -14,7 +16,9 @@ const Comments = () => {
   const [sortOrder, setSortOrder] = useState("newest");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, commentId: null });
   const { blogId } = useParams(); // Get blogId from URL if your routing supports it
+  const { showToast } = useToast();
 
   // Fetch comments for the current blog post
   useEffect(() => {
@@ -116,17 +120,29 @@ const Comments = () => {
   const containsScript = (str) => /<[^>]*>|\${|\(\)|\[\]|javascript:|on\w+\s*=|alert\(|document\.|window\.|eval\(|setTimeout\(|setInterval\(/gi.test(str);
   
   const sanitizeInput = (input) => {
-    // Basic sanitization to prevent script injection
-    const sanitized = typeof input === 'string' ? 
+    return typeof input === 'string' ? 
       input.replace(/<[^>]*>|\${|\(\)|\[\]|javascript:|on\w+\s*=|alert\(|document\.|window\.|eval\(|setTimeout\(|setInterval\(/gi, '') : 
-      '';
-    return sanitized.trim();
+      input;
   };
   
-  const validateInput = (input, maxLength = 1000) => {
-    if (!input || typeof input !== 'string') return false;
-    const sanitized = sanitizeInput(input);
-    return sanitized.length > 0 && sanitized.length <= maxLength;
+  const validateInput = (name, value) => {
+    if (containsScript(value)) {
+      showToast("Invalid input detected. Please avoid using special characters or HTML tags.", "error");
+      return false;
+    }
+
+    const maxLengths = {
+      text: 500,
+      author: 50,
+      post: 100
+    };
+
+    if (value.length > maxLengths[name]) {
+      showToast(`${name.charAt(0).toUpperCase() + name.slice(1)} must be less than ${maxLengths[name]} characters.`, "error");
+      return false;
+    }
+
+    return true;
   };
 
   // Input handlers
@@ -135,7 +151,7 @@ const Comments = () => {
     
     // Validate input to prevent script injection
     if (containsScript(value)) {
-      alert("Invalid input detected. Please avoid using special characters or HTML tags.");
+      showToast("Invalid input detected. Please avoid using special characters or HTML tags.", "error");
       return;
     }
     
@@ -147,7 +163,7 @@ const Comments = () => {
     };
     
     if (value.length > maxLengths[name]) {
-      alert(`${name.charAt(0).toUpperCase() + name.slice(1)} must be less than ${maxLengths[name]} characters.`);
+      showToast(`${name.charAt(0).toUpperCase() + name.slice(1)} must be less than ${maxLengths[name]} characters.`, "error");
       return;
     }
     
@@ -155,74 +171,81 @@ const Comments = () => {
   };
 
   // API actions with mock data support
-  const handleApproveComment = async (id) => {
-    if (typeof id !== 'number') return;
-    
+  const handleAddComment = async () => {
+    if (!validateInput('text', newComment.text) || 
+        !validateInput('author', newComment.author) || 
+        !validateInput('post', newComment.post)) {
+      return;
+    }
+
     try {
-      console.log(`Approving comment #${id}`);
-      
-      // Call the correct API endpoint for comment approval
+      const sanitizedComment = {
+        text: sanitizeInput(newComment.text),
+        author: sanitizeInput(newComment.author),
+        post: sanitizeInput(newComment.post),
+        date: new Date().toISOString().split("T")[0],
+        status: "pending",
+        id: comments.length + 1
+      };
+
+      const response = await API.post("/admin/comments/add", sanitizedComment);
+
+      if (response.data?.message) {
+        showToast(response.data.message, "success");
+      }
+
+      setComments((prev) => [sanitizedComment, ...prev]);
+      setNewComment({ text: "", author: "", post: "" });
+      setIsAddingComment(false);
+    } catch (err) {
+      console.error("Error adding comment:", err);
+      showToast("Failed to add comment. Please try again.", "error");
+    }
+  };
+
+  const handleApproveComment = async (id) => {
+    try {
       const response = await API.put(`/admin/comments/approve/${id}`);
       
-      console.log("Approval response:", response.data);
-      
-      // Show success message
       if (response.data?.message) {
-        // You could use a toast notification library here instead of alert
-        alert(response.data.message);
+        showToast(response.data.message, "success");
       }
       
-      // Update local state to reflect the change
       setComments((prev) =>
         prev.map((comment) =>
-          comment.id === id ? { 
-            ...comment, 
-            status: "approved",
-            approvedAt: new Date().toISOString(),
-            // The backend will set the approver from the security context
-          } : comment
+          comment.id === id ? { ...comment, status: "approved" } : comment
         )
       );
-      
-      // Optional: If you want comments to disappear from the pending list after approval
-      if (!blogId) {  // Only if we're in the "pending comments" view
-        setComments((prev) => prev.filter((comment) => comment.id !== id));
-        setFilteredComments((prev) => prev.filter((comment) => comment.id !== id));
-      }
-      
     } catch (err) {
       console.error("Error approving comment:", err);
       
-      // Enhanced error handling based on API documentation
       if (err.response) {
         switch (err.response.status) {
           case 401:
-            alert("Authentication required. Please log in to approve comments.");
+            showToast("Authentication required. Please log in to approve comments.", "error");
             break;
           case 403:
-            alert("You don't have permission to approve comments. Admin privileges required.");
+            showToast("You don't have permission to approve comments. Admin privileges required.", "error");
             break;
           case 404:
-            alert(err.response.data?.message || "Comment not found.");
+            showToast(err.response.data?.message || "Comment not found.", "error");
             break;
           case 500:
-            alert(err.response.data?.message || "Server error while approving comment.");
+            showToast(err.response.data?.message || "Server error while approving comment.", "error");
             break;
           default:
-            alert(`Error: ${err.response.data?.message || "Unknown error"}`);
+            showToast(`Error: ${err.response.data?.message || "Unknown error"}`, "error");
         }
       } else if (err.request) {
-        alert("Network error. Please check your connection and try again.");
+        showToast("Network error. Please check your connection and try again.", "error");
       } else {
-        alert(`Error: ${err.message}`);
+        showToast(`Error: ${err.message}`, "error");
       }
     }
   };
 
   const handleDeleteComment = async (id) => {
     if (typeof id !== 'number') return;
-    
-    if (!window.confirm(`Are you sure you want to delete this comment?`)) return;
     
     try {
       console.log(`Deleting comment #${id}`);
@@ -234,7 +257,7 @@ const Comments = () => {
       
       // Show success message
       if (response.data?.message) {
-        alert(response.data.message);
+        showToast(response.data.message, "success");
       }
       
       // Update local state by removing the deleted comment
@@ -248,28 +271,29 @@ const Comments = () => {
       if (err.response) {
         switch (err.response.status) {
           case 401:
-            alert("Authentication required. Please log in to delete comments.");
+            showToast("Authentication required. Please log in to delete comments.", "error");
             break;
           case 403:
-            alert("You don't have permission to delete comments. Admin privileges required.");
+            showToast("You don't have permission to delete comments. Admin privileges required.", "error");
             break;
           case 404:
-            alert(err.response.data?.message || "Comment not found.");
+            showToast(err.response.data?.message || "Comment not found.", "error");
             break;
           case 500:
-            alert(err.response.data?.message || "Server error while deleting comment.");
+            showToast(err.response.data?.message || "Server error while deleting comment.", "error");
             break;
           default:
-            alert(`Error: ${err.response.data?.message || "Unknown error"}`);
+            showToast(`Error: ${err.response.data?.message || "Unknown error"}`, "error");
         }
       } else if (err.request) {
-        alert("Network error. Please check your connection and try again.");
+        showToast("Network error. Please check your connection and try again.", "error");
       } else {
-        alert(`Error: ${err.message}`);
+        showToast(`Error: ${err.message}`, "error");
       }
     }
   };
 
+  // Search handler
   const handleSearchChange = (e) => {
     // Sanitize search input
     const value = sanitizeInput(e.target.value);
@@ -486,7 +510,7 @@ const Comments = () => {
                           </motion.button>
                         )}
                         <motion.button
-                          onClick={() => handleDeleteComment(comment.id)}
+                          onClick={() => setConfirmModal({ isOpen: true, commentId: comment.id })}
                           className="bg-red-100 text-red-700 hover:bg-red-200 p-2 rounded-lg transition-colors"
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
@@ -517,6 +541,22 @@ const Comments = () => {
             )}
           </div>
         </motion.div>
+        
+        {/* Confirmation Modal for Comment Deletion */}
+        <ConfirmationModal
+          isOpen={confirmModal.isOpen}
+          onClose={() => setConfirmModal({ isOpen: false, commentId: null })}
+          onConfirm={() => {
+            if (confirmModal.commentId) {
+              handleDeleteComment(confirmModal.commentId);
+            }
+            setConfirmModal({ isOpen: false, commentId: null });
+          }}
+          title="Delete Comment"
+          message="Are you sure you want to delete this comment? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
       </div>
     </div>
   );

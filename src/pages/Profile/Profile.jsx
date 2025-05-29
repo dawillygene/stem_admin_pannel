@@ -6,11 +6,14 @@ import ProfilePassword from "./ProfilePassword";
 import ProfileNotifications from "./ProfileNotifications";
 import ProfileSecurity from "./ProfileSecurity";
 import { FaCheckCircle } from "react-icons/fa";
+import { useToast } from "../../components/Toast";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const [user, setUser] = useState(null);
 
@@ -46,6 +49,7 @@ const Profile = () => {
   });
 
   const [successMessage, setSuccessMessage] = useState("");
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -90,14 +94,16 @@ const Profile = () => {
   }, [successMessage]);
 
   const handleLogout = async () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      try {
-        await API.post("/auth/logout");
-        window.location.href = "/login";
-      } catch (err) {
-        alert("Logout failed. Please try again.");
-        console.error("Logout error:", err);
-      }
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      await API.post("/auth/logout");
+      window.location.href = "/login";
+    } catch (err) {
+      showToast("Logout failed. Please try again.", "error");
+      console.error("Logout error:", err);
     }
   };
 
@@ -126,11 +132,11 @@ const Profile = () => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("New passwords don't match!");
+      showToast("New passwords don't match!", "error");
       return;
     }
     if (passwordData.newPassword.length < 8) {
-      alert("Password must be at least 8 characters long!");
+      showToast("Password must be at least 8 characters long!", "error");
       return;
     }
     try {
@@ -289,6 +295,18 @@ const Profile = () => {
           )}
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to log out? You will need to sign in again to access your profile."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="warning"
+      />
     </div>
   );
 };

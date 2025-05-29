@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaUpload, FaImage, FaFilePdf, FaTimes, FaCheck, FaEdit, FaTags, FaCalendarAlt, FaListUl } from "react-icons/fa";
 import API from "../utils/axios";
+import { useToast } from "../components/Toast";
 
 const BlogUpload = () => {
   const [blogTitle, setBlogTitle] = useState("");
@@ -19,6 +20,7 @@ const BlogUpload = () => {
   
   const fileInputRef = useRef(null);
   const pdfInputRef = useRef(null);
+  const { showToast } = useToast();
 
   const handlePictureChange = (e) => {
     const file = e.target.files[0];
@@ -32,7 +34,7 @@ const BlogUpload = () => {
     } else {
       setPicturePreview(null);
       setPicture(null);
-      alert("Please select a valid image file.");
+      showToast("Please select a valid image file.", "error");
     }
   };
 
@@ -114,7 +116,7 @@ console.log("Payload to be sent:", payload);
         setSuccessMessage(false);
       }, 2000);
     } catch (error) {
-      alert("An error occurred while submitting. Please try again.");
+      showToast("An error occurred while submitting. Please try again.", "error");
     } finally {
       setIsSubmitting(false);
     }
