@@ -1,9 +1,12 @@
+
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import AdminList from "./pages/AdminList/AdminList";
 import BlogUpload from "./pages/BlogUpload";
+import BlogList from "./pages/BlogList";
+import BlogEdit from "./pages/BlogEdit";
 import Profile from "./pages/Profile/Profile";
 import Auth from "./Auth/AuthPage";
 import NormalAdminDashboard from "./pages/NormalAdminDashboard";
@@ -13,7 +16,6 @@ import ProtectedRoute from "./Context/ProtectedRoute";
 import Comments from "./components/CommentCard";
 import BlogComments from './pages/BlogComments';
 import { useEffect } from "react";
-import { i } from "framer-motion/client";
 
 function App() {
   const location = useLocation();
@@ -25,31 +27,33 @@ function App() {
   }, [location]);
 
   return (
-    <Routes>
-      <Route path="/login" element={<Auth />} />
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Routes>
-                <Route path="/home" element={<Home />} />
-                <Route path="/dashboard" element={<Home />} />
-                <Route path="/super-admin" element={<SuperAdminDashboard />} />
-                <Route path="/admins" element={<AdminList />} />
-                <Route path="/post/comment" element={<BlogComments />} />
-                <Route path="/comments" element={<Comments />} />
-                <Route path="/gallery" element={<GalleryAdmin />} />
-                <Route path="/blogs" element={<BlogUpload />} />
-                <Route path="/profile" element={<Profile />} />
-                
-                <Route path="/normal-admin" element={<NormalAdminDashboard />} />
-              </Routes>
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+      <Routes>
+        <Route path="/login" element={<Auth />} />
+        <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Routes>
+                    <Route path="/home" element={<Home />} />
+                    <Route path="/dashboard" element={<Home />} />
+                    <Route path="/super-admin" element={<SuperAdminDashboard />} />
+                    <Route path="/admins" element={<AdminList />} />
+                    <Route path="/post/comment" element={<BlogComments />} />
+                    <Route path="/comments" element={<Comments />} />
+                    <Route path="/gallery" element={<GalleryAdmin />} />
+                    <Route path="/blogs" element={<BlogUpload />} />
+                    <Route path="/blogs/create" element={<BlogUpload />} />
+                    <Route path="/blogs/view" element={<BlogList />} />
+                    <Route path="/blogs/edit/:id" element={<BlogEdit />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/normal-admin" element={<NormalAdminDashboard />} />
+                  </Routes>
+                </MainLayout>
+              </ProtectedRoute>
+            }
+        />
+      </Routes>
   );
 }
 

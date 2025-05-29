@@ -1,19 +1,33 @@
 const StatusBadge = ({ status }) => {
-    const statusStyles = {
-      Approved: "bg-green-100 text-green-700",
-      Pending: "bg-yellow-100 text-yellow-700",
-      Suspended: "bg-red-100 text-red-700"
+  const getStatusConfig = (status) => {
+    const configs = {
+      Approved: {
+        className: "status-approved",
+        icon: "check-circle"
+      },
+      Pending: {
+        className: "status-pending",
+        icon: "clock"
+      },
+      Suspended: {
+        className: "status-suspended",
+        icon: "ban"
+      }
     };
-  
-    return (
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-medium ${
-          statusStyles[status] || "bg-gray-100 text-gray-700"
-        }`}
-      >
-        {status}
-      </span>
-    );
+
+    return configs[status] || { className: "bg-gray-100 text-gray-700", icon: "question-circle" };
   };
-  
+
+  const config = getStatusConfig(status);
+
+  return (
+    <span
+      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.className}`}
+    >
+      <i className={`fas fa-${config.icon} mr-1`}></i>
+      {status}
+    </span>
+  );
+};
+
   export default StatusBadge;

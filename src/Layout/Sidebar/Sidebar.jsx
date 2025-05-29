@@ -58,35 +58,41 @@ const Sidebar = () => {
     { path: "/admins", icon: "FaUsers", label: "Admins" },
     { path: "/post/comment", icon: "FaComment", label: "Post Comment" },
     { path: "/comments", icon: "FaComment", label: "Comments statistics" },
-    { path: "/blogs", icon: "FaFileUpload", label: "Blogs & Publications" },
+    {
+      path: "/blogs",
+      icon: "FaFileUpload",
+      label: "Blogs & Publications",
+      children: [
+        { path: "/blogs/view", icon: "FaList", label: "View Posts" },
+        { path: "/blogs/create", icon: "FaPlus", label: "Create Post" }
+      ]
+    },
     { path: "/gallery", icon: "FaImage", label: "Gallery" },
     { path: "/profile", icon: "FaUser", label: "Profile" },
-
-
   ];
 
   return (
-    <>
-      <SidebarMobileHeader isMobile={isMobile} isOpen={isOpen} setIsOpen={setIsOpen} />
-      <AnimatePresence>
-        <motion.div
-          className={`fixed top-0 left-0 h-screen w-64 bg-[#0066CC] text-white z-50 shadow-xl
+      <>
+        <SidebarMobileHeader isMobile={isMobile} isOpen={isOpen} setIsOpen={setIsOpen} />
+        <AnimatePresence>
+          <motion.div
+              className={`fixed top-0 left-0 h-screen w-64 bg-[#0066CC] text-white z-50 shadow-xl
           ${isMobile ? (isOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"}
         `}
-          animate={{
-            x: isMobile && !isOpen ? -256 : 0,
-          }}
-          transition={{ duration: 0.3 }}
-        >
-          <SidebarHeader />
-          <SidebarUser user={user} />
-          <SidebarNav navItems={navItems} location={location} isMobile={isMobile} setIsOpen={setIsOpen} />
-          <SidebarLogout handleLogout={handleLogout} />
-        </motion.div>
-      </AnimatePresence>
-      <SidebarMobileBackdrop isMobile={isMobile} isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div className="hidden md:block md:ml-64" />
-    </>
+              animate={{
+                x: isMobile && !isOpen ? -256 : 0,
+              }}
+              transition={{ duration: 0.3 }}
+          >
+            <SidebarHeader />
+            <SidebarUser user={user} />
+            <SidebarNav navItems={navItems} location={location} isMobile={isMobile} setIsOpen={setIsOpen} />
+            <SidebarLogout handleLogout={handleLogout} />
+          </motion.div>
+        </AnimatePresence>
+        <SidebarMobileBackdrop isMobile={isMobile} isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className="hidden md:block md:ml-64" />
+      </>
   );
 };
 
