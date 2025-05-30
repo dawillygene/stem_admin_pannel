@@ -228,7 +228,6 @@ const Profile = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header Banner */}
       <div className="bg-[#f8f8f8] text-blue-600 py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold">My Profile</h1>
@@ -237,7 +236,6 @@ const Profile = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8 w-full flex flex-col lg:flex-row gap-8">
-        {/* Sidebar */}
         <ProfileSidebar
           user={user}
           previewImage={previewImage}
@@ -248,8 +246,6 @@ const Profile = () => {
           activeTab={activeTab}
           handleLogout={handleLogout}
         />
-
-        {/* Main content area */}
         <div className="lg:w-3/4">
           {successMessage && (
             <div className="mb-6 p-4 rounded-lg bg-green-100 text-green-700 flex items-center">
@@ -295,8 +291,6 @@ const Profile = () => {
           )}
         </div>
       </div>
-
-      {/* Logout Confirmation Modal */}
       <ConfirmationModal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
