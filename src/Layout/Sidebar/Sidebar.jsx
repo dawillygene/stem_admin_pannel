@@ -51,11 +51,11 @@ const Sidebar = () => {
 
   const confirmLogout = async () => {
     try {
-      await logout();
-      // Redirect will be handled by the auth context
-    } catch (error) {
-      console.error("Logout error:", error);
+      await API.post("/auth/logout");
+      window.location.href = "/login";
+    } catch (err) {
       showToast("Logout failed. Please try again.", "error");
+      console.error("Logout error:", err);
     }
   };
 
@@ -63,7 +63,6 @@ const Sidebar = () => {
     { path: "/home", icon: "FaHome", label: "Home" },
     { path: "/super-admin", icon: "FaChartBar", label: "Dashboard" },
     { path: "/admins", icon: "FaUsers", label: "Admins" },
-    { path: "/post/comment", icon: "FaComment", label: "Post Comment" },
     { path: "/comments", icon: "FaComment", label: "Comments statistics" },
     { path: "/blog-comments", icon: "FaComment", label: "Blog Comments" },
     {
