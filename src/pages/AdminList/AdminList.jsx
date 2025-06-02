@@ -34,7 +34,6 @@ const AdminList = () => {
     fetchUsers();
   }, []);
 
-  // Reset to first page when search or status filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [search, statusFilter]);
@@ -53,13 +52,10 @@ const AdminList = () => {
     );
   }, [users, search, statusFilter]);
 
-  // Handle export functionality
   const handleExport = () => {
     showToast("Export started successfully!", "success");
 
-    // Simulate export process
     setTimeout(() => {
-      // In a real app, this would generate and download a CSV file
       const csvContent = "data:text/csv;charset=utf-8," 
         + "ID,Name,Email,Role,Status\n" 
         + filteredUsers.map(user => 
@@ -78,25 +74,21 @@ const AdminList = () => {
     }, 1000);
   };
 
-  // Calculate total pages
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
-  // Get current page of users
   const currentUsers = useMemo(() => {
     const indexOfLastUser = currentPage * itemsPerPage;
     const indexOfFirstUser = indexOfLastUser - itemsPerPage;
     return filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   }, [filteredUsers, currentPage, itemsPerPage]);
 
-  // Handle page change
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
-  // Handle items per page change
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1); // Reset to first page when changing items per page
+    setCurrentPage(1);
   };
 
   const handleStatusChange = async (id) => {
@@ -117,7 +109,6 @@ const AdminList = () => {
         action = "suspended";
       }
 
-
       showToast(`Updating status for ${user.name}...`, "info");
 
       await API.post(endpoint, { userId: id });
@@ -127,11 +118,10 @@ const AdminList = () => {
         )
       );
 
-
       showToast(`User ${user.name} has been ${action} successfully!`, "success");
     } catch (err) {
       console.error("Failed to update user status:", err);
-      showToast(`Failed to update status for ${user.name}`, "error");
+      showToast(`Failed to update status for ${user.name}", "error`);
     }
   };
 

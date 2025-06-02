@@ -3,12 +3,10 @@ import React from 'react';
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const pageNumbers = [];
 
-  // Generate page numbers array
   for (let i = 1; i <= totalPages; i++) {
     pageNumbers.push(i);
   }
 
-  // Limit displayed page numbers for better UI
   const getPageNumbers = () => {
     const maxPagesToShow = 5;
 
@@ -53,7 +51,6 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         </button>
 
         {getPageNumbers().map((number, index, array) => {
-          // Add ellipsis
           if (index > 0 && number - array[index - 1] > 1) {
             return (
               <React.Fragment key={`ellipsis-${number}`}>

@@ -13,65 +13,34 @@ import GalleryAdmin from "./components/Gallery/GalleryAdmin";
 
 function App() {
   return (
-
     <Router>
       <Routes>
-
         <Route path="/login" element={<Auth />} />
-
-    
         <Route
           path="/*"
           element={
-
             <div className="flex min-h-screen bg-gray-50">
-              {/* Sidebar (Navbar) */}
               <div className=" bg-[#0066CC] text-white flex-shrink-0">
                 <Navbar />
               </div>
-
-              {/* Content Area */}
               <div className="flex-1 overflow-hidden">
                 <Routes>
                   <Route path="/home" element={<Home />} />
-                  <Route
-                    path="/super-admin"
-                    element={
-
-                      <SuperAdminDashboard />
-
-                    }
-                  />
-                  <Route
-                    path="/admins"
-                    element={
-
-                      <AdminList />
-
-                    }
-                  />
+                  <Route path="/super-admin" element={<SuperAdminDashboard />} />
+                  <Route path="/admins" element={<AdminList />} />
                   <Route path="/gallery" element={<GalleryAdmin />} />
                   <Route path="/blogs" element={<BlogUpload />} />
                   <Route path="/profile" element={<Profile />} />
-                  <Route
-                    path="/normal-admin"
-                    element={
-
-                      <NormalAdminDashboard />
-
-                    }
-                  />
+                  <Route path="/normal-admin" element={<NormalAdminDashboard />} />
                   <Route path="*" element={<Navigate to="/home" replace />} />
                 </Routes>
               </div>
             </div>
-
           }
         />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
-
   );
 }
 
