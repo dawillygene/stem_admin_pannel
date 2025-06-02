@@ -99,8 +99,6 @@ const Sidebar = () => {
         </AnimatePresence>
         <SidebarMobileBackdrop isMobile={isMobile} isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className="hidden md:block md:ml-64" />
-        
-        {/* Logout Confirmation Modal */}
         <ConfirmationModal
           isOpen={showLogoutModal}
           onClose={() => setShowLogoutModal(false)}

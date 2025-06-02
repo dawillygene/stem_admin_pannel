@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-
 const AuthButton = ({ isLoading, children, ...props }) => {
   return (
     <motion.button
