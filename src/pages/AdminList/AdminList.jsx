@@ -121,7 +121,47 @@ const AdminList = () => {
       showToast(`User ${user.name} has been ${action} successfully!`, "success");
     } catch (err) {
       console.error("Failed to update user status:", err);
-      showToast(`Failed to update status for ${user.name}", "error`);
+      showToast(`Failed to update status for ${user.name}`, "error");
+    }
+  };
+
+  const handlePromoteToAdmin = async (id) => {
+    const user = users.find((admin) => admin.id === id);
+
+    try {
+      showToast(`Promoting ${user.name} to Admin...`, "info");
+
+      await API.post(`/admin/promote-to-admin/${id}`);
+      setUsers(
+        users.map((admin) =>
+          admin.id === id ? { ...admin, role: "ROLE_ADMIN" } : admin
+        )
+      );
+
+      showToast(`User ${user.name} has been promoted to Admin successfully!`, "success");
+    } catch (err) {
+      console.error("Failed to promote user to admin:", err);
+      showToast(`Failed to promote ${user.name} to Admin`, "error");
+    }
+  };
+
+  const handleDemoteFromAdmin = async (id) => {
+    const user = users.find((admin) => admin.id === id);
+
+    try {
+      showToast(`Demoting ${user.name} from Admin...`, "info");
+
+      await API.post(`/admin/demote-from-admin/${id}`);
+      setUsers(
+        users.map((admin) =>
+          admin.id === id ? { ...admin, role: "ROLE_USER" } : admin
+        )
+      );
+
+      showToast(`User ${user.name} has been demoted from Admin role.`, "success");
+    } catch (err) {
+      console.error("Failed to demote user from admin:", err);
+      showToast(`Failed to demote ${user.name} from Admin`, "error");
     }
   };
 
@@ -243,6 +283,8 @@ const AdminList = () => {
           <UserTable 
             users={currentUsers} 
             onStatusChange={handleStatusChange} 
+            onPromote={handlePromoteToAdmin}
+            onDemote={handleDemoteFromAdmin}
           />
         )}
 

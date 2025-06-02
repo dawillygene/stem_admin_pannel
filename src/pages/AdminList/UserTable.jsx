@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import UserRow from './UserRow';
 
-const UserTable = ({ users, onStatusChange }) => {
+const UserTable = ({ users, onStatusChange, onPromote, onDemote }) => {
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
 
@@ -97,6 +97,8 @@ const UserTable = ({ users, onStatusChange }) => {
                 key={user.id} 
                 user={user} 
                 onStatusChange={onStatusChange} 
+                onPromote={onPromote}
+                onDemote={onDemote}
               />
             ))}
             {users.length === 0 && (
@@ -113,4 +115,4 @@ const UserTable = ({ users, onStatusChange }) => {
   );
 };
 
-  export default UserTable;
+export default UserTable;
