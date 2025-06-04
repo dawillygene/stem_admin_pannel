@@ -10,10 +10,11 @@ const BlogUpload = () => {
   const [picture, setPicture] = useState(null);
   const [publication, setPublication] = useState(null);
   const [picturePreview, setPicturePreview] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState([]);
   const [currentTag, setCurrentTag] = useState("");
-  const [successMessage, setSuccessMessage] = useState(false);
   const [publishDate, setPublishDate] = useState("");
   const [isDraft, setIsDraft] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,7 +23,112 @@ const BlogUpload = () => {
   const pdfInputRef = useRef(null);
   const { showToast } = useToast();
 
-  const handlePictureChange = (e) => {
+  // UNSIGNED Cloudinary upload function with WebP optimization and progress UI
+  const uploadImageToCloudinary = async (file) => {
+    try {
+      setIsUploading(true);
+      
+      // Check environment variables
+      if (!import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || !import.meta.env.VITE_CLOUDINARY_CLOUD_NAME) {
+        showToast("Cloudinary configuration missing. Check environment variables.", "error");
+        return null;
+      }
+
+      // Convert image to WebP format with compression before upload
+      const optimizedFile = await convertToWebP(file);
+
+      const formData = new FormData();
+      formData.append("file", optimizedFile);
+      formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+      formData.append("folder", "STEM/blog_images");
+      
+      // Add Cloudinary transformations for further optimization
+      formData.append("quality", "auto:good");
+      formData.append("fetch_format", "auto");
+      formData.append("flags", "progressive");
+
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+      showToast("Optimizing and uploading image...", "info");
+
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        if (errorData.error?.message?.includes("Upload preset must be whitelisted")) {
+          showToast("Upload preset not configured for unsigned uploads. Please check Cloudinary settings.", "error");
+        } else {
+          showToast(`Upload failed: ${errorData.error?.message || 'Unknown error'}`, "error");
+        }
+        
+        return null;
+      }
+
+      const data = await response.json();
+      
+      setUploadedImageUrl(data.secure_url);
+      showToast(`Image uploaded successfully! Reduced to ${(data.bytes / 1024 / 1024).toFixed(2)} MB`, "success");
+      return data.secure_url;
+
+    } catch (error) {
+      showToast("Upload failed. Please try again.", "error");
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Convert image to WebP format for smaller file size
+  const convertToWebP = (file) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate optimal dimensions (max 1920px width, maintain aspect ratio)
+        const maxWidth = 1920;
+        const maxHeight = 1080;
+        let { width, height } = img;
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            const webpFile = new File([blob], `${file.name.split('.')[0]}.webp`, {
+              type: 'image/webp',
+              lastModified: Date.now()
+            });
+            resolve(webpFile);
+          },
+          'image/webp',
+          0.85 // 85% quality for good balance between size and quality
+        );
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handlePictureChange = async (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith("image/")) {
       setPicture(file);
@@ -31,9 +137,13 @@ const BlogUpload = () => {
         setPicturePreview(reader.result);
       };
       reader.readAsDataURL(file);
+
+      await uploadImageToCloudinary(file);
+
     } else {
       setPicturePreview(null);
       setPicture(null);
+      setUploadedImageUrl(null);
       showToast("Please select a valid image file.", "error");
     }
   };
@@ -41,6 +151,7 @@ const BlogUpload = () => {
   const handleRemovePicture = () => {
     setPicture(null);
     setPicturePreview(null);
+    setUploadedImageUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -76,45 +187,48 @@ const BlogUpload = () => {
     setIsSubmitting(true);
 
     try {
-      // If you want to upload files, you must upload them separately and get their URLs first.
-      // Here, we assume you have image and document URLs, not files.
       const payload = {
         title: blogTitle,
         content: blogContent,
-        // image: picture ? picture : "https://example.com/images/stem_image.jpg",
-        image: "https://example.com/images/stem_image.jpg",  
+        image: uploadedImageUrl || "https://example.com/images/stem_image.jpg",
         alt: blogTitle || "STEM education image",
-        // documentUrl: publication ? publication : null,
         documentUrl: null,
         category: category ? { id: "technology" } : "technology",
         tags,
         publishDate,
         isDraft,
       };
-console.log("Payload to be sent:", payload);
 
       const response = await API.post("/blog/posts", payload);
-
-      console.log("Response from server:", response);
 
       if (response.status !== 200 && response.status !== 201) {
         throw new Error("Failed to upload blog post");
       }
 
-      setSuccessMessage(true);
+      // Show success toast and reset form
+      showToast(
+        isDraft 
+          ? "Blog post saved as draft successfully!" 
+          : "Blog post published successfully!", 
+        "success"
+      );
 
-      setTimeout(() => {
-        setBlogTitle("");
-        setBlogContent("");
-        setPicture(null);
-        setPublication(null);
-        setPicturePreview(null);
-        setCategory("");
-        setTags([]);
-        setPublishDate("");
-        setIsDraft(false);
-        setSuccessMessage(false);
-      }, 2000);
+      // Reset form after successful submission
+      setBlogTitle("");
+      setBlogContent("");
+      setPicture(null);
+      setPublication(null);
+      setPicturePreview(null);
+      setUploadedImageUrl(null);
+      setCategory("");
+      setTags([]);
+      setPublishDate("");
+      setIsDraft(false);
+      
+      // Clear file inputs
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (pdfInputRef.current) pdfInputRef.current.value = "";
+
     } catch (error) {
       showToast("An error occurred while submitting. Please try again.", "error");
     } finally {
@@ -154,21 +268,6 @@ console.log("Payload to be sent:", payload);
             </h1>
             <p className="mt-1 opacity-90">Share content about STEM education initiatives</p>
           </div>
-
-          {/* Success Message */}
-          <AnimatePresence>
-            {successMessage && (
-              <motion.div 
-                className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 flex items-center"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-              >
-                <FaCheck className="text-green-500 mr-3" />
-                <span>Blog post uploaded successfully! Redirecting to dashboard...</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -301,7 +400,7 @@ console.log("Payload to be sent:", payload);
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Featured Image Upload */}
+              {/* Featured Image Upload with Enhanced Loading UI */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Featured Image
@@ -313,33 +412,144 @@ console.log("Payload to be sent:", payload);
                     accept="image/*"
                     onChange={handlePictureChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={isUploading}
                   />
+                  
+                  {/* Loading State */}
+                  {isUploading && (
+                    <motion.div 
+                      className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg z-10"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      {/* Enhanced Spinner */}
+                      <div className="relative">
+                        <div className="w-16 h-16 border-4 border-gray-200 border-t-[#0066CC] rounded-full animate-spin"></div>
+                        <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-[#FD9148] rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+                      </div>
+                      
+                      {/* Progress Text */}
+                      <motion.div 
+                        className="mt-4 text-center"
+                        initial={{ y: 10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <p className="text-[#0066CC] font-semibold text-lg">Optimizing Image</p>
+                        <p className="text-gray-600 text-sm mt-1">Converting to WebP format...</p>
+                        
+                        {/* Animated Progress Dots */}
+                        <div className="flex justify-center space-x-1 mt-3">
+                          {[0, 1, 2].map((i) => (
+                            <motion.div
+                              key={i}
+                              className="w-2 h-2 bg-[#0066CC] rounded-full"
+                              animate={{
+                                scale: [1, 1.5, 1],
+                                opacity: [0.5, 1, 0.5],
+                              }}
+                              transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                delay: i * 0.2,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  )}
                   
                   {!picturePreview ? (
                     <div className="text-center">
-                      <FaImage className="mx-auto h-12 w-12 text-gray-400" />
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        className="mx-auto h-12 w-12 text-gray-400 mb-3"
+                      >
+                        <FaImage className="w-full h-full" />
+                      </motion.div>
                       <p className="mt-2 text-sm text-gray-600">
                         Drag and drop an image, or <span className="text-[#0066CC] font-medium">browse</span>
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">JPG, PNG or GIF up to 5MB</p>
+                      <p className="text-xs text-gray-500 mt-1">JPG, PNG or GIF • Automatically optimized to WebP</p>
+                      <p className="text-xs text-gray-400 mt-1">Max resolution: 1920x1080 for optimal performance</p>
                     </div>
                   ) : (
                     <div className="relative w-full">
-                      <img
-                        src={picturePreview}
-                        alt="Preview"
-                        className="w-full h-40 object-cover rounded-lg"
-                      />
+                      <div className="relative">
+                        <img
+                          src={picturePreview}
+                          alt="Preview"
+                          className="w-full h-40 object-cover rounded-lg"
+                        />
+                        
+                        {/* Upload Success Overlay */}
+                        {uploadedImageUrl && !isUploading && (
+                          <motion.div 
+                            className="absolute inset-0 bg-green-500/20 backdrop-blur-sm flex items-center justify-center rounded-lg"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <motion.div 
+                              className="bg-white rounded-full p-3 shadow-lg"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.1, type: "spring" }}
+                            >
+                              <FaCheck className="text-green-500 text-xl" />
+                            </motion.div>
+                          </motion.div>
+                        )}
+                      </div>
+                      
                       <button
                         type="button"
                         onClick={handleRemovePicture}
-                        className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-red-100 transition-colors"
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-2 shadow-lg hover:bg-red-600 transition-colors"
+                        disabled={isUploading}
                       >
-                        <FaTimes className="text-red-500" />
+                        <FaTimes className="text-sm" />
                       </button>
+                      
+                      {/* Image Info */}
+                      {uploadedImageUrl && !isUploading && (
+                        <motion.div 
+                          className="mt-2 text-xs text-green-600 text-center"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 }}
+                        >
+                          ✓ Optimized and uploaded successfully
+                        </motion.div>
+                      )}
                     </div>
                   )}
                 </div>
+                
+                {/* Upload Progress Info */}
+                {isUploading && (
+                  <motion.div 
+                    className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <div className="flex items-center text-sm text-blue-700">
+                      <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Processing image for optimal web performance...</span>
+                    </div>
+                    <div className="mt-2 text-xs text-blue-600">
+                      • Converting to WebP format for smaller file size<br/>
+                      • Optimizing resolution and quality<br/>
+                      • Uploading to cloud storage
+                    </div>
+                  </motion.div>
+                )}
               </div>
 
               {/* PDF Upload */}
