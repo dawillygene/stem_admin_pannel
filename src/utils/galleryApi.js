@@ -1,18 +1,12 @@
 import API from './axios';
 
-// Gallery API utility functions
 export const galleryApi = {
-  // Upload image to Cloudinary (reusing the same pattern from BlogUpload)
   uploadImageToCloudinary: async (file) => {
     try {
-      // Check environment variables
       if (!import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || !import.meta.env.VITE_CLOUDINARY_CLOUD_NAME) {
         throw new Error("Cloudinary configuration missing. Check environment variables.");
       }
-
-      // Convert image to WebP format with compression
       const optimizedFile = await convertToWebP(file);
-
       const formData = new FormData();
       formData.append("file", optimizedFile);
       formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
