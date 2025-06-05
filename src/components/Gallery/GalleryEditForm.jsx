@@ -1,16 +1,23 @@
 import { useState, useEffect } from 'react';
+import { galleryApi } from '../../utils/galleryApi';
+import { useToast } from '../Toast';
 
 const GalleryEditForm = ({ item, onSubmit }) => {
   const [formData, setFormData] = useState({
     id: item.id,
     title: item.title,
     description: item.description,
-    category: item.category,
-    tags: [...item.tags],
-    image: item.image
+    category: item.category?.id || item.category,
+    tags: item.tags || [],
+    image: item.image,
+    featured: item.featured || false
   });
   const [errors, setErrors] = useState({});
   const [tagInput, setTagInput] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState('');
+  const { showToast } = useToast();
 
   // Update form when the item prop changes
   useEffect(() => {
@@ -18,26 +25,28 @@ const GalleryEditForm = ({ item, onSubmit }) => {
       id: item.id,
       title: item.title,
       description: item.description,
-      category: item.category,
-      tags: [...item.tags],
-      image: item.image
+      category: item.category?.id || item.category,
+      tags: item.tags || [],
+      image: item.image,
+      featured: item.featured || false
     });
   }, [item]);
 
-  // Available categories
+  // Available categories matching the API structure
   const categories = [
     { id: 'campus', label: 'Campus Life' },
-    { id: 'stem', label: 'STEM Education' },
+    { id: 'science', label: 'Science' },
+    { id: 'technology', label: 'Technology' },
     { id: 'labs', label: 'Laboratories' },
     { id: 'teacher', label: 'Teacher Training' },
     { id: 'community', label: 'Community Engagement' }
   ];
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     });
     
     // Clear error for this field
@@ -50,10 +59,13 @@ const GalleryEditForm = ({ item, onSubmit }) => {
   };
 
   const handleAddTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
+    if (tagInput.trim() && !formData.tags.some(tag => {
+      const tagName = typeof tag === 'string' ? tag : tag.name;
+      return tagName === tagInput.trim();
+    })) {
       setFormData({
         ...formData,
-        tags: [...formData.tags, tagInput.trim()]
+        tags: [...formData.tags, { name: tagInput.trim() }]
       });
       setTagInput('');
     }
@@ -62,31 +74,58 @@ const GalleryEditForm = ({ item, onSubmit }) => {
   const handleRemoveTag = (tagToRemove) => {
     setFormData({
       ...formData,
-      tags: formData.tags.filter(tag => tag !== tagToRemove)
+      tags: formData.tags.filter(tag => {
+        const tagName = typeof tag === 'string' ? tag : tag.name;
+        return tagName !== tagToRemove;
+      })
     });
   };
 
-  const handleImageChange = (e) => {
-    // In a real app, you would handle file upload to a server or cloud storage
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Using FileReader to convert to data URL (for demo purposes)
-      const reader = new FileReader();
-      reader.onload = () => {
+    if (file && file.type.startsWith("image/")) {
+      try {
+        setIsUploading(true);
+        showToast("Optimizing and uploading image...", "info");
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = () => {
+          setFormData({
+            ...formData,
+            image: reader.result
+          });
+        };
+        reader.readAsDataURL(file);
+
+        // Upload to Cloudinary
+        const imageUrl = await galleryApi.uploadImageToCloudinary(file);
+        
+        if (imageUrl) {
+          setUploadedImageUrl(imageUrl);
+          showToast(`Image uploaded successfully!`, "success");
+          
+          // Clear error for image field
+          if (errors.image) {
+            setErrors({
+              ...errors,
+              image: null
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        showToast(error.message || "Failed to upload image. Please try again.", "error");
+        // Restore original image
         setFormData({
           ...formData,
-          image: reader.result
+          image: item.image
         });
-        
-        // Clear error for image field
-        if (errors.image) {
-          setErrors({
-            ...errors,
-            image: null
-          });
-        }
-      };
-      reader.readAsDataURL(file);
+      } finally {
+        setIsUploading(false);
+      }
+    } else {
+      showToast("Please select a valid image file.", "error");
     }
   };
 
@@ -102,11 +141,69 @@ const GalleryEditForm = ({ item, onSubmit }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (validateForm()) {
-      onSubmit(formData);
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Prepare data for API
+      const apiData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        tags: formData.tags,
+        image: uploadedImageUrl || formData.image,
+        featured: formData.featured
+      };
+
+      console.log("Updating gallery item:", apiData);
+
+      // Call API
+      const response = await galleryApi.updateGalleryItem(formData.id, apiData);
+      
+      showToast("Gallery item updated successfully!", "success");
+      
+      // Call parent onSubmit with updated data
+      if (onSubmit) {
+        onSubmit({ ...formData, ...apiData });
+      }
+
+    } catch (error) {
+      console.error("Error updating gallery item:", error);
+      
+      let errorMessage = "Failed to update gallery item.";
+      
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            errorMessage = error.response.data?.message || "Invalid input data. Please check your form.";
+            break;
+          case 401:
+            errorMessage = "Authentication required. Please log in.";
+            break;
+          case 403:
+            errorMessage = "You don't have permission to update this gallery item.";
+            break;
+          case 404:
+            errorMessage = "Gallery item not found.";
+            break;
+          default:
+            errorMessage = error.response.data?.message || "Server error occurred.";
+        }
+      } else if (error.request) {
+        errorMessage = "Network error. Please check your connection.";
+      } else {
+        errorMessage = error.message || "An unexpected error occurred.";
+      }
+      
+      showToast(errorMessage, "error");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -119,7 +216,7 @@ const GalleryEditForm = ({ item, onSubmit }) => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Title
+                Title <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -130,13 +227,14 @@ const GalleryEditForm = ({ item, onSubmit }) => {
                   errors.title ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter title"
+                disabled={isSubmitting}
               />
               {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
+                Description <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="description"
@@ -147,19 +245,21 @@ const GalleryEditForm = ({ item, onSubmit }) => {
                   errors.description ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter description"
+                disabled={isSubmitting}
               ></textarea>
               {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
+                Category <span className="text-red-500">*</span>
               </label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled={isSubmitting}
               >
                 {categories.map(category => (
                   <option key={category.id} value={category.id}>
@@ -171,24 +271,28 @@ const GalleryEditForm = ({ item, onSubmit }) => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tags
+                Tags <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
-                {formData.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full inline-flex items-center"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="ml-1 text-blue-600 hover:text-blue-800"
+                {formData.tags.map((tag, index) => {
+                  const tagName = typeof tag === 'string' ? tag : tag.name;
+                  return (
+                    <span
+                      key={index}
+                      className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full inline-flex items-center"
                     >
-                      &times;
-                    </button>
-                  </span>
-                ))}
+                      {tagName}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tagName)}
+                        className="ml-1 text-blue-600 hover:text-blue-800"
+                        disabled={isSubmitting}
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  );
+                })}
               </div>
               <div className="flex">
                 <input
@@ -198,22 +302,38 @@ const GalleryEditForm = ({ item, onSubmit }) => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Add a tag"
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                  disabled={isSubmitting}
                 />
                 <button
                   type="button"
                   onClick={handleAddTag}
-                  className="px-4 py-2 bg-primary text-white font-medium rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="px-4 py-2 bg-primary text-white font-medium rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  disabled={isSubmitting || !tagInput.trim()}
                 >
                   Add
                 </button>
               </div>
               {errors.tags && <p className="text-red-500 text-xs mt-1">{errors.tags}</p>}
             </div>
+
+            <div>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="featured"
+                  checked={formData.featured}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  disabled={isSubmitting}
+                />
+                <span className="ml-2 text-sm text-gray-700">Featured item</span>
+              </label>
+            </div>
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Image
+              Image <span className="text-red-500">*</span>
             </label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
               {formData.image ? (
@@ -221,33 +341,46 @@ const GalleryEditForm = ({ item, onSubmit }) => {
                   <img
                     src={formData.image}
                     alt="Preview"
-                    className="mx-auto h-64 object-cover"
+                    className="mx-auto h-64 object-cover rounded-md"
                   />
+                  {/* Upload Success Indicator */}
+                  {uploadedImageUrl && !isUploading && (
+                    <div className="absolute top-2 left-2 bg-green-500 text-white rounded-full p-2">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, image: '' })}
                     className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                    disabled={isUploading || isSubmitting}
                   >
                     &times;
                   </button>
                 </div>
               ) : (
                 <div>
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
+                  {isUploading ? (
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  ) : (
+                    <svg
+                      className="mx-auto h-12 w-12 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  )}
                   <p className="mt-1 text-sm text-gray-500">
-                    Click to upload or drag and drop
+                    {isUploading ? "Uploading and optimizing..." : "Click to upload or drag and drop"}
                   </p>
                 </div>
               )}
@@ -258,13 +391,12 @@ const GalleryEditForm = ({ item, onSubmit }) => {
                 className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer ${
                   formData.image ? 'hidden' : ''
                 }`}
+                disabled={isUploading || isSubmitting}
               />
             </div>
             {errors.image && <p className="text-red-500 text-xs mt-1">{errors.image}</p>}
             <p className="text-xs text-gray-500 mt-2">
-              For best results, use an image at least 800px wide and in JPG or
-              // Continuing src/components/admin/GalleryEditForm.jsx
-              // For best results, use an image at least 800px wide and in JPG or PNG format.
+              For best results, use an image at least 800px wide and in JPG or PNG format. Images will be automatically optimized.
             </p>
           </div>
         </div>
@@ -274,14 +406,26 @@ const GalleryEditForm = ({ item, onSubmit }) => {
             type="button"
             onClick={() => window.history.back()}
             className="px-6 py-2 bg-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-primary text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-6 py-2 bg-primary text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isSubmitting || isUploading}
           >
-            Save Changes
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Updating...
+              </>
+            ) : (
+              "Save Changes"
+            )}
           </button>
         </div>
       </form>

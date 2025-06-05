@@ -3,6 +3,8 @@ import GalleryUploadForm from './GalleryUploadForm';
 import GalleryEditForm from './GalleryEditForm';
 import GalleryItemsList from './GalleryItemsList';
 import ConfirmationModal from '../ConfirmationModal';
+import { galleryApi } from '../../utils/galleryApi';
+import { useToast } from '../Toast';
 
 const GalleryAdmin = () => {
   const [galleryItems, setGalleryItems] = useState([]);
@@ -10,68 +12,128 @@ const GalleryAdmin = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, itemId: null });
+  const { showToast } = useToast();
 
-  // Mock function to load data - in a real app, this would be an API call
+  // Load gallery items from API
   useEffect(() => {
-    // Simulating data fetch from API/localStorage
-    const storedItems = localStorage.getItem('galleryItems');
-    if (storedItems) {
-      setGalleryItems(JSON.parse(storedItems));
-    }
+    fetchGalleryItems();
   }, []);
 
-  // Save to localStorage whenever gallery items change
-  useEffect(() => {
-    if (galleryItems.length > 0) {
-      localStorage.setItem('galleryItems', JSON.stringify(galleryItems));
-    }
-  }, [galleryItems]);
-
-  const handleAddItem = (newItem) => {
+  const fetchGalleryItems = async () => {
     setIsLoading(true);
-    // Generate a new ID based on timestamp
-    const id = Date.now();
-    const itemWithId = { ...newItem, id };
-    
-    // Simulate API delay
-    setTimeout(() => {
-      setGalleryItems([...galleryItems, itemWithId]);
-      setView('list');
+    try {
+      const items = await galleryApi.getAllGalleryItems();
+      setGalleryItems(items);
+    } catch (error) {
+      console.error("Error fetching gallery items:", error);
+      
+      let errorMessage = "Failed to load gallery items.";
+      
+      if (error.response) {
+        errorMessage = error.response.data?.message || "Server error occurred.";
+      } else if (error.request) {
+        errorMessage = "Network error. Please check your connection.";
+      } else {
+        errorMessage = error.message || "An unexpected error occurred.";
+      }
+      
+      showToast(errorMessage, "error");
+      
+      // Fallback to localStorage if API fails
+      const storedItems = localStorage.getItem('galleryItems');
+      if (storedItems) {
+        setGalleryItems(JSON.parse(storedItems));
+        showToast("Loaded items from local storage.", "info");
+      }
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
-  const handleUpdateItem = (updatedItem) => {
-    setIsLoading(true);
-    // Simulate API delay
-    setTimeout(() => {
-      const updatedItems = galleryItems.map(item => 
-        item.id === updatedItem.id ? updatedItem : item
-      );
-      setGalleryItems(updatedItems);
-      setView('list');
-      setIsLoading(false);
-    }, 500);
+  const handleAddItem = async (newItem) => {
+    // The onSubmit from GalleryUploadForm already handles API call
+    // Just refresh the list and navigate back
+    await fetchGalleryItems();
+    setView('list');
+  };
+
+  const handleUpdateItem = async (updatedItem) => {
+    // The onSubmit from GalleryEditForm already handles API call
+    // Just refresh the list and navigate back
+    await fetchGalleryItems();
+    setView('list');
+    setSelectedItem(null);
   };
 
   const handleDeleteItem = (id) => {
     setConfirmModal({ isOpen: true, itemId: id });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     const { itemId } = confirmModal;
     setIsLoading(true);
-    // Simulate API delay
-    setTimeout(() => {
+    
+    try {
+      await galleryApi.deleteGalleryItem(itemId);
+      
+      // Remove item from local state
       const filteredItems = galleryItems.filter(item => item.id !== itemId);
       setGalleryItems(filteredItems);
+      
+      showToast("Gallery item deleted successfully!", "success");
+      
+    } catch (error) {
+      console.error("Error deleting gallery item:", error);
+      
+      let errorMessage = "Failed to delete gallery item.";
+      
+      if (error.response) {
+        switch (error.response.status) {
+          case 401:
+            errorMessage = "Authentication required. Please log in.";
+            break;
+          case 403:
+            errorMessage = "You don't have permission to delete this gallery item.";
+            break;
+          case 404:
+            errorMessage = "Gallery item not found.";
+            break;
+          default:
+            errorMessage = error.response.data?.message || "Server error occurred.";
+        }
+      } else if (error.request) {
+        errorMessage = "Network error. Please check your connection.";
+      } else {
+        errorMessage = error.message || "An unexpected error occurred.";
+      }
+      
+      showToast(errorMessage, "error");
+    } finally {
       setIsLoading(false);
-    }, 500);
+      setConfirmModal({ isOpen: false, itemId: null });
+    }
   };
 
   const handleEditClick = (item) => {
     setSelectedItem(item);
     setView('edit');
+  };
+
+  const handleViewIncrement = async (itemId) => {
+    try {
+      await galleryApi.incrementViewCount(itemId);
+      // Optionally update local state to show new view count
+      setGalleryItems(prevItems => 
+        prevItems.map(item => 
+          item.id === itemId 
+            ? { ...item, viewCount: (item.viewCount || 0) + 1 }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error("Error incrementing view count:", error);
+      // Don't show error toast for view count failures as it's not critical
+    }
   };
 
   return (
@@ -83,15 +145,20 @@ const GalleryAdmin = () => {
             {view !== 'list' && (
               <button 
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-                onClick={() => setView('list')}
+                onClick={() => {
+                  setView('list');
+                  setSelectedItem(null);
+                }}
+                disabled={isLoading}
               >
                 Back to List
               </button>
             )}
             {view === 'list' && (
               <button 
-                className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
                 onClick={() => setView('add')}
+                disabled={isLoading}
               >
                 Add New Item
               </button>
@@ -112,7 +179,8 @@ const GalleryAdmin = () => {
           <GalleryItemsList 
             items={galleryItems} 
             onEdit={handleEditClick} 
-            onDelete={handleDeleteItem} 
+            onDelete={handleDeleteItem}
+            onViewIncrement={handleViewIncrement}
           />
         )}
 
@@ -131,10 +199,7 @@ const GalleryAdmin = () => {
         <ConfirmationModal
           isOpen={confirmModal.isOpen}
           onClose={() => setConfirmModal({ isOpen: false, itemId: null })}
-          onConfirm={() => {
-            confirmDelete();
-            setConfirmModal({ isOpen: false, itemId: null });
-          }}
+          onConfirm={confirmDelete}
           title="Delete Gallery Item"
           message="Are you sure you want to delete this gallery item? This action cannot be undone."
           confirmText="Delete"
