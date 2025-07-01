@@ -8,6 +8,7 @@ import BlogList from "./pages/BlogList";
 import BlogEdit from "./pages/BlogEdit";
 import BlogComments from "./pages/BlogComments";
 import Profile from "./pages/Profile/Profile";
+import Team from "./pages/Team";
 import Auth from "./Auth/AuthPage";
 import NormalAdminDashboard from "./pages/NormalAdminDashboard";
 import GalleryAdmin from "./components/Gallery/GalleryAdmin";
@@ -38,6 +39,7 @@ function App() {
                     <Route path="/dashboard" element={<Home />} />
                     <Route path="/super-admin" element={<SuperAdminDashboard />} />
                     <Route path="/admins" element={<AdminList />} />
+                    <Route path="/team" element={<Team />} />
                     <Route path="/comments" element={<Comments />} />
                     <Route path="/blog-comments" element={<BlogComments />} />
                     <Route path="/gallery" element={<GalleryAdmin />} />
