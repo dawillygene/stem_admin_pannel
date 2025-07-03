@@ -96,8 +96,25 @@ adminDashbord/
 
 > See `/src/utils/activityApi.js` and `/vite.config.js` for more API details and proxy setup.
 
+## Recent Updates
+
+### About Management Eye Icon Fix (July 3, 2025)
+**Author:** Elia William Mariki (@dawillygene)
+
+**Issue Fixed:** Overview section eye icon buttons were not displaying content in modal preview.
+
+**Solution:** Updated all eye icon button handlers to pass proper data parameters to `handleViewContent()` function:
+- Background section now passes `background` data object
+- Benefits section now passes `benefits` array  
+- Justification section now passes `justification` data object
+- Objectives section now passes `objectives` data object
+
+**Result:** All Overview cards now properly display detailed content when eye icon is clicked, showing formatted data in AboutContentModal component.
+
+---
+
 ## Author
-**Dawollygene ELIA WILLIAM MARIKI**
+**Dawillygene ELIA WILLIAM MARIKI**
 
 ---
 

@@ -64,6 +64,7 @@ const Sidebar = () => {
     { path: "/super-admin", icon: "FaChartBar", label: "Dashboard" },
     { path: "/admins", icon: "FaUsers", label: "Admins" },
     { path: "/team", icon: "FaUsers", label: "Team Management" },
+    { path: "/about", icon: "FaInfoCircle", label: "About Management" },
     { path: "/comments", icon: "FaComment", label: "Comments statistics" },
     { path: "/blog-comments", icon: "FaComment", label: "Blog Comments" },
     {

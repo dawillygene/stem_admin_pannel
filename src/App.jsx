@@ -9,6 +9,8 @@ import BlogEdit from "./pages/BlogEdit";
 import BlogComments from "./pages/BlogComments";
 import Profile from "./pages/Profile/Profile";
 import Team from "./pages/Team";
+import About from "./pages/About";
+import AboutManagement from "./pages/AboutManagement";
 import Auth from "./Auth/AuthPage";
 import NormalAdminDashboard from "./pages/NormalAdminDashboard";
 import GalleryAdmin from "./components/Gallery/GalleryAdmin";
@@ -40,6 +42,8 @@ function App() {
                     <Route path="/super-admin" element={<SuperAdminDashboard />} />
                     <Route path="/admins" element={<AdminList />} />
                     <Route path="/team" element={<Team />} />
+                    <Route path="/about-public" element={<About />} />
+                    <Route path="/about" element={<AboutManagement />} />
                     <Route path="/comments" element={<Comments />} />
                     <Route path="/blog-comments" element={<BlogComments />} />
                     <Route path="/gallery" element={<GalleryAdmin />} />
