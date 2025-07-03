@@ -18,9 +18,10 @@ import {
   FaChartBar,
   FaChartLine,
   FaListAlt,
-  FaHistory
+  FaHistory,
+  FaTrash
 } from 'react-icons/fa';
-import { getAboutContent, exportContent, getAnalytics } from '../utils/aboutApi';
+import { getAboutContent, exportContent, getAnalytics, deleteBenefit } from '../utils/aboutApi';
 import { useAuth } from '../Context/AppProvier';
 import { useToast } from '../components/Toast';
 import AboutContentModal from '../components/AboutContentModal';
@@ -182,6 +183,21 @@ const AboutManagement = () => {
     setSelectedBenefit(null);
     setEditingItem(null);
     setShowBenefitModal(true);
+  };
+
+  // Delete benefit handler with confirmation
+  // Author: Elia William Mariki (@dawillygene) - July 3, 2025
+  const handleDeleteBenefit = async (benefit) => {
+    if (window.confirm(`Are you sure you want to delete "${benefit.title}"? This action cannot be undone.`)) {
+      try {
+        await deleteBenefit(benefit.id);
+        showToast('Benefit deleted successfully', 'success');
+        await handleDataRefresh(); // Refresh data to reflect changes
+      } catch (error) {
+        console.error('Error deleting benefit:', error);
+        showToast('Failed to delete benefit. Please try again.', 'error');
+      }
+    }
   };
 
   const handleEditObjective = (objective = null) => {
@@ -761,6 +777,13 @@ const AboutManagement = () => {
                                 title="Edit benefit"
                               >
                                 <FaEdit />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBenefit(benefit)}
+                                className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                                title="Delete benefit"
+                              >
+                                <FaTrash />
                               </button>
                             </div>
                           </div>
