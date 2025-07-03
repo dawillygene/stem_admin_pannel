@@ -21,7 +21,7 @@ import {
   FaHistory,
   FaTrash
 } from 'react-icons/fa';
-import { getAboutContent, exportContent, getAnalytics, deleteBenefit } from '../utils/aboutApi';
+import { getAboutContent, exportContent, getAnalytics, deleteBenefit, deleteSpecificObjective } from '../utils/aboutApi';
 import { useAuth } from '../Context/AppProvier';
 import { useToast } from '../components/Toast';
 import AboutContentModal from '../components/AboutContentModal';
@@ -210,6 +210,21 @@ const AboutManagement = () => {
     setSelectedObjective(null);
     setEditingItem(null);
     setShowObjectiveModal(true);
+  };
+
+  // Delete specific objective handler with confirmation
+  // Author: Elia William Mariki (@dawillygene) - July 3, 2025
+  const handleDeleteObjective = async (objective) => {
+    if (window.confirm(`Are you sure you want to delete "${objective.title}"? This action cannot be undone.`)) {
+      try {
+        await deleteSpecificObjective(objective.id);
+        showToast('Objective deleted successfully', 'success');
+        await handleDataRefresh(); // Refresh data to reflect changes
+      } catch (error) {
+        console.error('Error deleting objective:', error);
+        showToast('Failed to delete objective. Please try again.', 'error');
+      }
+    }
   };
 
   // Filter content based on search matching the backend data structure
@@ -952,6 +967,13 @@ const AboutManagement = () => {
                                       title="Edit objective"
                                     >
                                       <FaEdit />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteObjective(objective)}
+                                      className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                                      title="Delete objective"
+                                    >
+                                      <FaTrash />
                                     </button>
                                   </div>
                                 </div>
