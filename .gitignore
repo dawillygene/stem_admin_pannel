@@ -36,8 +36,73 @@ src/tests/
 *.test.jsx
 *.spec.js
 *.spec.jsx
-checklist.md
-progress.md
-DEVELOPER_SETUP.md
-documentation/
-copilot-rules.md
+
+# Documentation files (keeping as part of project)
+# checklist.md
+# progress.md
+# DEVELOPER_SETUP.md
+# documentation/
+# copilot-rules.md
+
+# Temporary documentation files
+docs/temp/
+documentation/drafts/
+README.temp.md
+
+# Development and debug files
+debug-logs/
+performance-reports/
+test-data/
+admin-dashboard-config.local.json
+homepage-content-backup/
+
+# Build artifacts
+*.map
+coverage/
+.nyc_output
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# IDE and editor files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+
+# Local configuration files
+config/local.json
+config/development.json
+config/production.json
+
+# Media files (if storing locally)
+uploads/
+public/uploads/
+assets/uploads/
+
+# API documentation generated files
+docs/api/generated/
+
+# Security files
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
