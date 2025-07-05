@@ -694,6 +694,7 @@ const MonitoringManagement = ({ data, onUpdate, isLoading }) => {
           message="Are you sure you want to save these changes? This will update the monitoring and evaluation section on your homepage."
           confirmText="Save Changes"
           cancelText="Cancel"
+          type="info"
           isLoading={isSaving}
         />
       )}

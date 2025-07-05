@@ -841,6 +841,7 @@ const EthicsManagement = ({ data, onUpdate, isLoading }) => {
           message="Are you sure you want to save these changes? This will update the ethics and policies section on your homepage."
           confirmText="Save Changes"
           cancelText="Cancel"
+          type="info"
           isLoading={isSaving}
         />
       )}
