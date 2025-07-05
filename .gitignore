@@ -44,6 +44,12 @@ src/tests/
 # documentation/
 # copilot-rules.md
 
+# Documentation folder - only exclude temp files
+docs/temp/
+docs/*.backup
+docs/*.draft
+docs/*.temp.md
+
 # Temporary documentation files
 docs/temp/
 documentation/drafts/

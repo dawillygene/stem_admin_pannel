@@ -64,23 +64,11 @@ const EthicsManagement = ({ data, onUpdate, isLoading }) => {
   useEffect(() => {
     if (data) {
       setEthicsData({
-        title: '',
-        subtitle: '',
-        description: '',
-        background_color: 'bg-gray-50',
-        policies: [],
-        compliance: {
-          certifications: [],
-          audits: [],
-          last_review: ''
-        },
-        contact: {
-          email: '',
-          phone: '',
-          address: ''
-        },
-        is_published: true,
-        ...data,
+        title: data.title || '',
+        subtitle: data.subtitle || '',
+        description: data.description || '',
+        background_color: data.background_color || 'bg-gray-50',
+        policies: data.policies || [],
         compliance: {
           certifications: [],
           audits: [],
@@ -92,7 +80,8 @@ const EthicsManagement = ({ data, onUpdate, isLoading }) => {
           phone: '',
           address: '',
           ...(data.contact || {})
-        }
+        },
+        is_published: data.is_published !== undefined ? data.is_published : true
       });
     }
   }, [data]);

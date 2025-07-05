@@ -229,7 +229,12 @@ const HomepageService = {
 
   async updateActivitiesSection(activitiesData) {
     try {
-      const response = await API.put('/homepage-content/activities', activitiesData);
+      // Based on your API spec, use PUT to update section metadata
+      const response = await API.put('/homepage-content/ACTIVITIES', {
+        title: activitiesData.title,
+        subtitle: activitiesData.subtitle,
+        backgroundColor: activitiesData.background_color
+      });
       return response.data;
     } catch (error) {
       console.error('Error updating activities section:', error);
@@ -239,7 +244,12 @@ const HomepageService = {
 
   async updateOutcomesSection(outcomesData) {
     try {
-      const response = await API.put('/homepage-content/outcomes', outcomesData);
+      // Based on your API spec, use PUT to update section metadata
+      const response = await API.put('/homepage-content/OUTCOMES', {
+        title: outcomesData.title,
+        subtitle: outcomesData.subtitle,
+        backgroundColor: outcomesData.background_color
+      });
       return response.data;
     } catch (error) {
       console.error('Error updating outcomes section:', error);
@@ -248,11 +258,35 @@ const HomepageService = {
   },
 
   async updateMonitoringSection(monitoringData) {
-    return this.updateMonitoring(monitoringData);
+    try {
+      // Based on your API spec, use PUT to update section metadata
+      const response = await API.put('/homepage-content/MONITORING', {
+        title: monitoringData.title,
+        subtitle: monitoringData.subtitle,
+        description: monitoringData.description,
+        backgroundColor: monitoringData.background_color
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating monitoring section:', error);
+      throw error;
+    }
   },
 
   async updateEthicsSection(ethicsData) {
-    return this.updateEthics(ethicsData);
+    try {
+      // Based on your API spec, use PUT to update section metadata
+      const response = await API.put('/homepage-content/ETHICS', {
+        title: ethicsData.title,
+        subtitle: ethicsData.subtitle,
+        description: ethicsData.description,
+        backgroundColor: ethicsData.background_color
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating ethics section:', error);
+      throw error;
+    }
   },
 
   // Reorder content

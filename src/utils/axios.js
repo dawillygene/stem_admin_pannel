@@ -1,5 +1,7 @@
 import axios from "axios";
 
+// Use relative path for API calls so Vite proxy can handle it
+// Vite will proxy /api requests to the target specified in vite.config.js
 const API = axios.create({
   baseURL: "/api",
   withCredentials: true,

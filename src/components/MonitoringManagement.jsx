@@ -61,36 +61,25 @@ const MonitoringManagement = ({ data, onUpdate, isLoading }) => {
   useEffect(() => {
     if (data) {
       setMonitoringData({
-        title: '',
-        subtitle: '',
-        description: '',
-        background_color: 'bg-[#0066CC]',
-        text_color: 'text-white',
-        framework: {
-          title: '',
-          description: '',
-          phases: []
-        },
-        indicators: [],
-        reports: {
-          frequency: 'quarterly',
-          next_report: '',
-          last_report: ''
-        },
-        is_published: true,
-        ...data,
+        title: data.title || '',
+        subtitle: data.subtitle || '',
+        description: data.description || '',
+        background_color: data.background_color || 'bg-[#0066CC]',
+        text_color: data.text_color || 'text-white',
         framework: {
           title: '',
           description: '',
           phases: [],
           ...(data.framework || {})
         },
+        indicators: data.indicators || [],
         reports: {
           frequency: 'quarterly',
           next_report: '',
           last_report: '',
           ...(data.reports || {})
-        }
+        },
+        is_published: data.is_published !== undefined ? data.is_published : true
       });
     }
   }, [data]);
