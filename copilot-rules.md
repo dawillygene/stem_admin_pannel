@@ -7,7 +7,6 @@
    - Git commit with a short, one-line message.
    - Push the commit to GitHub immediately.
 4. Use clear code comments to describe the logic of all generated code.
-5. Auto-generate unit tests for every function or component.
 6. Remove all temporary or unused variables and artifacts.
 7. Track every requirement step using `checklist.md` and `progress.md` by creating new folder and store the tracker files
 8. For each requirement:

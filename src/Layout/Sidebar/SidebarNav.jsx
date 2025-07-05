@@ -11,6 +11,8 @@ import {
   FaList,
   FaPlus,
   FaChevronDown,
+  FaGlobe,
+  FaInfoCircle,
 } from "react-icons/fa";
 import { useState } from "react";
 
@@ -24,6 +26,8 @@ const iconMap = {
   FaUser: <FaUser />,
   FaList: <FaList />,
   FaPlus: <FaPlus />,
+  FaGlobe: <FaGlobe />,
+  FaInfoCircle: <FaInfoCircle />,
 };
 
 const SidebarNav = ({ navItems, location, isMobile, setIsOpen }) => {

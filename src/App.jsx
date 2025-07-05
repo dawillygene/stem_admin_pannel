@@ -11,6 +11,7 @@ import Profile from "./pages/Profile/Profile";
 import Team from "./pages/Team";
 import About from "./pages/About";
 import AboutManagement from "./pages/AboutManagement";
+import HomepageManagement from "./pages/HomepageManagement";
 import Auth from "./Auth/AuthPage";
 import NormalAdminDashboard from "./pages/NormalAdminDashboard";
 import GalleryAdmin from "./components/Gallery/GalleryAdmin";
@@ -44,6 +45,7 @@ function App() {
                     <Route path="/team" element={<Team />} />
                     <Route path="/about-public" element={<About />} />
                     <Route path="/about" element={<AboutManagement />} />
+                    <Route path="/homepage" element={<HomepageManagement />} />
                     <Route path="/comments" element={<Comments />} />
                     <Route path="/blog-comments" element={<BlogComments />} />
                     <Route path="/gallery" element={<GalleryAdmin />} />
