@@ -7,9 +7,8 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://192.168.1.150:8000/',
-        // target: 'http://localhost:8000/',
         changeOrigin: true,
-        headers: {
+        headers: { 
           Accept: 'application/json',
           // 'Content-Type':'application/json',
           // 'Access-Control-Allow-Origin':'*',

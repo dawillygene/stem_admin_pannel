@@ -19,7 +19,10 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [activityToDelete, setActivityToDelete] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [errors, setErrors] = useState({});
 
   const iconOptions = [
@@ -36,12 +39,12 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
   ];
 
   const colorOptions = [
-    { value: 'primary', label: 'Primary Blue', preview: 'bg-[#0066CC]' },
-    { value: 'secondary', label: 'Orange', preview: 'bg-[#FD9148]' },
-    { value: 'accent', label: 'Yellow', preview: 'bg-[#FFAD03]' },
-    { value: 'success', label: 'Green', preview: 'bg-green-500' },
-    { value: 'danger', label: 'Red', preview: 'bg-red-500' },
-    { value: 'info', label: 'Cyan', preview: 'bg-cyan-500' }
+    { value: '#1976d2', label: 'Primary Blue', preview: 'bg-[#1976d2]' },
+    { value: '#FD9148', label: 'Orange', preview: 'bg-[#FD9148]' },
+    { value: '#FFAD03', label: 'Yellow', preview: 'bg-[#FFAD03]' },
+    { value: '#10b981', label: 'Green', preview: 'bg-green-500' },
+    { value: '#ef4444', label: 'Red', preview: 'bg-red-500' },
+    { value: '#06b6d4', label: 'Cyan', preview: 'bg-cyan-500' }
   ];
 
   // Update local state when data changes
@@ -51,12 +54,25 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
       setActivitiesData({
         title: '',
         subtitle: '',
-        background_color: 'white',
+        background_color: '#f8f9fa',
         activities: [],
         ...data
       });
     }
   }, [data]);
+
+  // Refresh activities data from API
+  const refreshActivitiesData = async () => {
+    try {
+      const activitiesContent = await HomepageService.getActivitiesContent();
+      setActivitiesData(activitiesContent);
+      if (onUpdate) {
+        onUpdate(activitiesContent);
+      }
+    } catch (error) {
+      console.error('Error refreshing activities data:', error);
+    }
+  };
 
   // Validate form data
   const validateForm = () => {
@@ -118,17 +134,19 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
   // Add new activity
   const addActivity = () => {
     const newActivity = {
-      id: Date.now(),
       title: '',
       description: '',
-      icon_class: 'fas fa-tasks',
-      color: 'primary',
-      order: activitiesData.activities.length + 1,
+      icon_class: 'fas fa-tasks', // Use snake_case for frontend state
+      iconClass: 'fas fa-tasks',   // Also keep camelCase for API compatibility
+      color: '#1976d2',           // Use hex color instead of string
       is_featured: false,
       is_published: true,
       link: '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      image: '',
+      additional_info: '',
+      additionalInfo: '',
+      tags: null,
+      progress: null
     };
     
     setSelectedActivity(newActivity);
@@ -142,56 +160,82 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
   };
 
   // Save activity
-  const saveActivity = () => {
+  const saveActivity = async () => {
     const activityErrors = validateActivity(selectedActivity);
     if (Object.keys(activityErrors).length > 0) {
       setErrors(activityErrors);
       return;
     }
 
-    if (selectedActivity.id && activitiesData.activities.find(a => a.id === selectedActivity.id)) {
-      // Update existing activity
-      setActivitiesData(prev => ({
-        ...prev,
-        activities: prev.activities.map(a => 
-          a.id === selectedActivity.id ? { ...selectedActivity, updated_at: new Date().toISOString() } : a
-        )
-      }));
-    } else {
-      // Add new activity
-      setActivitiesData(prev => ({
-        ...prev,
-        activities: [...prev.activities, { ...selectedActivity, id: Date.now() }]
-      }));
-    }
+    setIsSaving(true);
+    try {
+      if (selectedActivity.id && activitiesData.activities.find(a => a.id === selectedActivity.id)) {
+        // Update existing activity via API
+        await HomepageService.updateActivity(selectedActivity.id, selectedActivity);
+      } else {
+        // Add new activity via API
+        await HomepageService.addActivity(selectedActivity);
+      }
 
-    setShowActivityModal(false);
-    setSelectedActivity(null);
-    setErrors({});
+      // Refresh the activities data from API
+      await refreshActivitiesData();
+
+      setShowActivityModal(false);
+      setSelectedActivity(null);
+      setErrors({});
+    } catch (error) {
+      console.error('Error saving activity:', error);
+      setErrors({ api: 'Failed to save activity. Please try again.' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Delete activity with confirmation
+  const confirmDeleteActivity = (activity) => {
+    setActivityToDelete(activity);
+    setShowDeleteModal(true);
   };
 
   // Delete activity
-  const deleteActivity = (activityId) => {
-    setActivitiesData(prev => ({
-      ...prev,
-      activities: prev.activities.filter(a => a.id !== activityId)
-    }));
+  const deleteActivity = async () => {
+    if (!activityToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await HomepageService.deleteActivity(activityToDelete.id);
+      
+      // Refresh the activities data from API
+      await refreshActivitiesData();
+      
+      setShowDeleteModal(false);
+      setActivityToDelete(null);
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      setErrors({ api: 'Failed to delete activity. Please try again.' });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Move activity up/down
-  const moveActivity = (index, direction) => {
+  const moveActivity = async (index, direction) => {
     const newActivities = [...activitiesData.activities];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     
     if (targetIndex >= 0 && targetIndex < newActivities.length) {
       [newActivities[index], newActivities[targetIndex]] = [newActivities[targetIndex], newActivities[index]];
       
-      // Update order values
-      newActivities.forEach((activity, i) => {
-        activity.order = i + 1;
-      });
-      
-      setActivitiesData(prev => ({ ...prev, activities: newActivities }));
+      try {
+        // Send reorder request to API
+        const itemIds = newActivities.map(activity => activity.id);
+        await HomepageService.reorderActivities(itemIds);
+        
+        // Refresh the activities data from API
+        await refreshActivitiesData();
+      } catch (error) {
+        console.error('Error reordering activities:', error);
+      }
     }
   };
 
@@ -287,7 +331,14 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
             <div className="text-center py-8 text-gray-500">
               <i className="fas fa-tasks text-4xl mb-4"></i>
               <p className="text-lg">No activities added yet</p>
-              <p className="text-sm">Click "Add Activity" to create your first activity</p>
+              <p className="text-sm mb-4">Click "Add Activity" to create your first activity</p>
+              <button
+                onClick={addActivity}
+                className="px-4 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0056b3] transition-colors"
+              >
+                <i className="fas fa-plus mr-2"></i>
+                Add Your First Activity
+              </button>
             </div>
           ) : (
             <div className="space-y-4">
@@ -296,66 +347,73 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
                   key={activity.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4 flex-1">
-                      <div className={`p-3 rounded-lg ${colorOptions.find(c => c.value === activity.color)?.preview || 'bg-gray-500'}`}>
-                        <i className={`${activity.icon_class} text-white text-lg`}></i>
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h4 className="font-semibold text-gray-900">{activity.title}</h4>
-                          <span className="text-sm text-gray-500">#{activity.order}</span>
-                          {activity.is_featured && (
-                            <span className="px-2 py-1 bg-[#FFAD03] text-white text-xs rounded-full">Featured</span>
-                          )}
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            activity.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {activity.is_published ? 'Published' : 'Draft'}
-                          </span>
-                        </div>
-                        
-                        <p className="text-gray-600 text-sm mb-2">{activity.description}</p>
-                        
-                        {activity.link && (
-                          <div className="flex items-center text-sm text-[#0066CC]">
-                            <i className="fas fa-link mr-1"></i>
-                            <span>{activity.link}</span>
-                          </div>
-                        )}
-                      </div>
+                  {/* Activity Header with Action Buttons */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <h4 className="font-semibold text-gray-900">{activity.title}</h4>
+                      <span className="text-sm text-gray-500">#{activity.order || 'N/A'}</span>
+                      {activity.is_featured && (
+                        <span className="px-2 py-1 bg-[#FFAD03] text-white text-xs rounded-full">Featured</span>
+                      )}
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        activity.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {activity.is_published ? 'Published' : 'Draft'}
+                      </span>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
+                    {/* MAIN ACTION BUTTONS - ALWAYS VISIBLE */}
+                    <div className="flex items-center space-x-2 bg-gray-50 p-1 rounded-lg">
                       <button
                         onClick={() => moveActivity(index, 'up')}
                         disabled={index === 0}
-                        className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        className="px-3 py-1 text-gray-600 hover:text-gray-800 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm font-medium"
+                        title="Move Up"
                       >
-                        <i className="fas fa-arrow-up"></i>
+                        ↑
                       </button>
                       <button
                         onClick={() => moveActivity(index, 'down')}
                         disabled={index === activitiesData.activities.length - 1}
-                        className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        className="px-3 py-1 text-gray-600 hover:text-gray-800 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm font-medium"
+                        title="Move Down"
                       >
-                        <i className="fas fa-arrow-down"></i>
+                        ↓
                       </button>
                       <button
                         onClick={() => editActivity(activity)}
-                        className="p-2 text-[#0066CC] hover:text-[#0056b3]"
+                        className="px-3 py-1 bg-blue-500 text-white hover:bg-blue-600 rounded text-sm font-medium"
+                        title="Edit Activity"
                       >
-                        <i className="fas fa-edit"></i>
+                        Edit
                       </button>
                       <button
-                        onClick={() => deleteActivity(activity.id)}
-                        className="p-2 text-red-500 hover:text-red-700"
+                        onClick={() => confirmDeleteActivity(activity)}
+                        className="px-3 py-1 bg-red-500 text-white hover:bg-red-600 rounded text-sm font-medium"
+                        title="Delete Activity"
                       >
-                        <i className="fas fa-trash"></i>
+                        Delete
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Activity Content */}
+                  <div className="flex items-start space-x-4">
+                    <div className={`p-3 rounded-lg flex-shrink-0`} style={{ backgroundColor: activity.color || '#1976d2' }}>
+                      <i className={`${activity.icon_class} text-white text-lg`}></i>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <p className="text-gray-600 text-sm mb-2">{activity.description}</p>
+                      
+                      {activity.link && (
+                        <div className="flex items-center text-sm text-[#0066CC]">
+                          <i className="fas fa-link mr-1"></i>
+                          <span>{activity.link}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -381,7 +439,11 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
                     ? 'Edit Activity' : 'Add New Activity'}
                 </h3>
                 <button
-                  onClick={() => setShowActivityModal(false)}
+                  onClick={() => {
+                    setShowActivityModal(false);
+                    setSelectedActivity(null);
+                    setErrors({});
+                  }}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <i className="fas fa-times text-lg"></i>
@@ -389,6 +451,15 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
               </div>
 
               <div className="space-y-4">
+                {errors.api && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center">
+                      <i className="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                      <span className="text-red-700 text-sm">{errors.api}</span>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -460,18 +531,26 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Color *
                     </label>
-                    <select
-                      value={selectedActivity?.color || ''}
-                      onChange={(e) => setSelectedActivity(prev => ({ ...prev, color: e.target.value }))}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-transparent ${
-                        errors.color ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    >
-                      <option value="">Select a color</option>
-                      {colorOptions.map(color => (
-                        <option key={color.value} value={color.value}>{color.label}</option>
-                      ))}
-                    </select>
+                    <div className="flex items-center space-x-2">
+                      <select
+                        value={selectedActivity?.color || ''}
+                        onChange={(e) => setSelectedActivity(prev => ({ ...prev, color: e.target.value }))}
+                        className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-transparent ${
+                          errors.color ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <option value="">Select a color</option>
+                        {colorOptions.map(color => (
+                          <option key={color.value} value={color.value}>{color.label}</option>
+                        ))}
+                      </select>
+                      {selectedActivity?.color && (
+                        <div 
+                          className="w-8 h-8 rounded border-2 border-gray-300"
+                          style={{ backgroundColor: selectedActivity.color }}
+                        ></div>
+                      )}
+                    </div>
                     {errors.color && <p className="text-red-500 text-sm mt-1">{errors.color}</p>}
                   </div>
                 </div>
@@ -501,16 +580,29 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
 
               <div className="flex justify-end space-x-3 mt-6">
                 <button
-                  onClick={() => setShowActivityModal(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    setShowActivityModal(false);
+                    setSelectedActivity(null);
+                    setErrors({});
+                  }}
+                  disabled={isSaving}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={saveActivity}
-                  className="px-4 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0056b3] transition-colors"
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0056b3] transition-colors disabled:opacity-50"
                 >
-                  Save Activity
+                  {isSaving ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Activity'
+                  )}
                 </button>
               </div>
             </motion.div>
@@ -530,6 +622,24 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
           cancelText="Cancel"
           type="info"
           isLoading={isSaving}
+        />
+      )}
+
+      {/* Delete Activity Confirmation Modal */}
+      {showDeleteModal && (
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setActivityToDelete(null);
+          }}
+          onConfirm={deleteActivity}
+          title="Delete Activity"
+          message={`Are you sure you want to delete "${activityToDelete?.title}"? This action cannot be undone.`}
+          confirmText="Delete Activity"
+          cancelText="Cancel"
+          type="danger"
+          isLoading={isDeleting}
         />
       )}
     </div>

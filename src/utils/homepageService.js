@@ -104,7 +104,21 @@ const HomepageService = {
   // Add new activity
   async addActivity(activityData) {
     try {
-      const response = await API.post('/homepage-content/activities', activityData);
+      const requestData = {
+        title: activityData.title,
+        description: activityData.description,
+        iconClass: activityData.iconClass || activityData.icon_class,
+        color: activityData.color,
+        isFeatured: activityData.isFeatured || activityData.is_featured || false,
+        isPublished: activityData.isPublished || activityData.is_published || true,
+        link: activityData.link || null,
+        image: activityData.image || null,
+        additionalInfo: activityData.additionalInfo || activityData.additional_info || null,
+        tags: activityData.tags || null,
+        progress: activityData.progress || null
+      };
+      
+      const response = await API.post('/homepage-content/activities', requestData);
       return response.data;
     } catch (error) {
       console.error('Error adding activity:', error);
@@ -115,7 +129,21 @@ const HomepageService = {
   // Update activity
   async updateActivity(activityId, activityData) {
     try {
-      const response = await API.put(`/homepage-content/activities/${activityId}`, activityData);
+      const requestData = {
+        title: activityData.title,
+        description: activityData.description,
+        iconClass: activityData.iconClass || activityData.icon_class,
+        color: activityData.color,
+        isFeatured: activityData.isFeatured || activityData.is_featured,
+        isPublished: activityData.isPublished || activityData.is_published,
+        link: activityData.link,
+        image: activityData.image,
+        additionalInfo: activityData.additionalInfo || activityData.additional_info,
+        tags: activityData.tags,
+        progress: activityData.progress
+      };
+      
+      const response = await API.put(`/homepage-content/activities/${activityId}`, requestData);
       return response.data;
     } catch (error) {
       console.error('Error updating activity:', error);
@@ -229,15 +257,22 @@ const HomepageService = {
 
   async updateActivitiesSection(activitiesData) {
     try {
-      // Based on your API spec, use PUT to update section metadata
-      const response = await API.put('/homepage-content/ACTIVITIES', {
+      console.log('Updating activities section with data:', activitiesData);
+      
+      // According to API doc: PUT /api/homepage-content/ACTIVITIES
+      const requestData = {
         title: activitiesData.title,
-        subtitle: activitiesData.subtitle,
+        description: activitiesData.subtitle, // Map subtitle to description as per API doc
         backgroundColor: activitiesData.background_color
-      });
+      };
+      
+      console.log('Sending section update request:', requestData);
+      
+      const response = await API.put('/homepage-content/ACTIVITIES', requestData);
       return response.data;
     } catch (error) {
       console.error('Error updating activities section:', error);
+      console.error('Error details:', JSON.stringify(error.response?.data, null, 2));
       throw error;
     }
   },
@@ -247,7 +282,7 @@ const HomepageService = {
       // Based on your API spec, use PUT to update section metadata
       const response = await API.put('/homepage-content/OUTCOMES', {
         title: outcomesData.title,
-        subtitle: outcomesData.subtitle,
+        description: outcomesData.description,
         backgroundColor: outcomesData.background_color
       });
       return response.data;
@@ -289,11 +324,11 @@ const HomepageService = {
     }
   },
 
-  // Reorder content
-  async reorderActivities(itemsOrder) {
+  // Reorder activities
+  async reorderActivities(itemIds) {
     try {
       const response = await API.put('/homepage-content/activities/reorder', {
-        items: itemsOrder
+        itemIds: itemIds
       });
       return response.data;
     } catch (error) {
