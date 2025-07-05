@@ -375,6 +375,75 @@ const HomepageService = {
       console.error('Error uploading image:', error);
       throw error;
     }
+  },
+
+  // Section-specific update methods (aliases for the management components)
+  async updateHeroSection(heroData) {
+    return this.updateHero(heroData);
+  },
+
+  async updateActivitiesSection(activitiesData) {
+    try {
+      if (useMockData) {
+        console.log('Mock: Updating activities section', activitiesData);
+        mockHomepageData.data.activities = { ...mockHomepageData.data.activities, ...activitiesData };
+        return mockHomepageData.data.activities;
+      }
+
+      const response = await API.put('/homepage/activities', activitiesData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating activities section:', error);
+      throw error;
+    }
+  },
+
+  async updateOutcomesSection(outcomesData) {
+    try {
+      if (useMockData) {
+        console.log('Mock: Updating outcomes section', outcomesData);
+        mockHomepageData.data.outcomes = { ...mockHomepageData.data.outcomes, ...outcomesData };
+        return mockHomepageData.data.outcomes;
+      }
+
+      const response = await API.put('/homepage/outcomes', outcomesData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating outcomes section:', error);
+      throw error;
+    }
+  },
+
+  async updateMonitoringSection(monitoringData) {
+    try {
+      if (useMockData) {
+        console.log('Mock: Updating monitoring section', monitoringData);
+        mockHomepageData.data.monitoring = { ...mockHomepageData.data.monitoring, ...monitoringData };
+        return mockHomepageData.data.monitoring;
+      }
+
+      const response = await API.put('/homepage/monitoring', monitoringData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating monitoring section:', error);
+      throw error;
+    }
+  },
+
+  async updateEthicsSection(ethicsData) {
+    try {
+      if (useMockData) {
+        console.log('Mock: Updating ethics section', ethicsData);
+        mockHomepageData.data.ethics = { ...mockHomepageData.data.ethics, ...ethicsData };
+        return mockHomepageData.data.ethics;
+      }
+
+      const response = await API.put('/homepage/ethics', ethicsData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating ethics section:', error);
+      throw error;
+    }
   }
 };
 
