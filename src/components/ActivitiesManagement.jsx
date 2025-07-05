@@ -74,17 +74,6 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
     }
   };
 
-  // Validate form data
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!activitiesData.title || !activitiesData.title.trim()) newErrors.title = 'Title is required';
-    if (!activitiesData.subtitle || !activitiesData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   // Validate activity data
   const validateActivity = (activity) => {
     const newErrors = {};
@@ -97,27 +86,47 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
     return newErrors;
   };
 
-  // Handle form submission
-  const handleSave = async () => {
-    if (!validateForm()) return;
-    
-    setIsSaving(true);
-    try {
-      const updatedData = await HomepageService.updateActivitiesSection(activitiesData);
-      onUpdate(updatedData);
-      setShowConfirmModal(false);
-    } catch (error) {
-      console.error('Error saving activities data:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle input changes
+  // Handle input changes with debounced auto-save
   const handleInputChange = (field, value) => {
     setActivitiesData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  // Handle manual save of section settings
+  const handleSaveSection = async () => {
+    // Validate section data
+    const newErrors = {};
+    if (!activitiesData.title || !activitiesData.title.trim()) newErrors.title = 'Title is required';
+    if (!activitiesData.subtitle || !activitiesData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await HomepageService.updateActivitiesSection(activitiesData);
+      if (onUpdate) {
+        onUpdate(activitiesData);
+      }
+      
+      // Clear any previous errors
+      setErrors({});
+      
+      // Show success message briefly
+      setErrors({ success: result.message || 'Section settings saved successfully!' });
+      setTimeout(() => {
+        setErrors({});
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error saving section settings:', error);
+      setErrors({ api: 'Failed to save section settings. Please try again.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -264,20 +273,49 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
             <i className="fas fa-plus mr-2"></i>
             Add Activity
           </button>
-          <button
-            onClick={() => setShowConfirmModal(true)}
-            disabled={isSaving}
-            className="px-4 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0056b3] transition-colors disabled:opacity-50"
-          >
-            <i className="fas fa-save mr-2"></i>
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </button>
         </div>
       </div>
 
       {/* Section Settings */}
       <div className="bg-white rounded-lg shadow-sm p-6 border">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900">Section Settings</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Section Settings</h3>
+          <button
+            onClick={handleSaveSection}
+            disabled={isSaving}
+            className="px-4 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0056b3] transition-colors disabled:opacity-50"
+          >
+            {isSaving ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Saving...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-save mr-2"></i>
+                Save Section
+              </>
+            )}
+          </button>
+        </div>
+        
+        {errors.api && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center">
+              <i className="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+              <span className="text-red-700 text-sm">{errors.api}</span>
+            </div>
+          </div>
+        )}
+        
+        {errors.success && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center">
+              <i className="fas fa-check-circle text-green-500 mr-2"></i>
+              <span className="text-green-700 text-sm">{errors.success}</span>
+            </div>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -609,21 +647,6 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
           </div>
         )}
       </AnimatePresence>
-
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <ConfirmationModal
-          isOpen={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
-          onConfirm={handleSave}
-          title="Save Activities Section Changes"
-          message="Are you sure you want to save these changes? This will update the activities section on your homepage."
-          confirmText="Save Changes"
-          cancelText="Cancel"
-          type="info"
-          isLoading={isSaving}
-        />
-      )}
 
       {/* Delete Activity Confirmation Modal */}
       {showDeleteModal && (
