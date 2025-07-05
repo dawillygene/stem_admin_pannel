@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import HomepageService from '../utils/homepageService';
 import ConfirmationModal from './ConfirmationModal';
+import Toast from './Toast';
 
 /**
  * Outcomes Section Management Component
@@ -11,16 +12,30 @@ import ConfirmationModal from './ConfirmationModal';
 const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
   const [outcomesData, setOutcomesData] = useState({
     title: '',
-    subtitle: '',
-    background_color: 'bg-gray-50',
+    description: '',
+    background_color: '#ffffff',
+    content_background: 'white',
     outcomes: []
   });
 
   const [selectedOutcome, setSelectedOutcome] = useState(null);
   const [showOutcomeModal, setShowOutcomeModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [outcomeToDelete, setOutcomeToDelete] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [toast, setToast] = useState(null);
+
+  // Show toast notification
+  const showToast = (message, type = 'info', duration = 3000) => {
+    setToast({ message, type, duration });
+  };
+
+  // Clear toast notification
+  const clearToast = () => {
+    setToast(null);
+  };
 
   const iconOptions = [
     { value: 'fas fa-graduation-cap', label: 'Graduation Cap' },
@@ -36,12 +51,12 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
   ];
 
   const colorOptions = [
-    { value: 'primary', label: 'Primary Blue', preview: 'bg-[#0066CC]' },
-    { value: 'secondary', label: 'Orange', preview: 'bg-[#FD9148]' },
-    { value: 'accent', label: 'Yellow', preview: 'bg-[#FFAD03]' },
-    { value: 'success', label: 'Green', preview: 'bg-green-500' },
-    { value: 'purple', label: 'Purple', preview: 'bg-purple-500' },
-    { value: 'teal', label: 'Teal', preview: 'bg-teal-500' }
+    { value: '#1976d2', label: 'Primary Blue', preview: 'bg-[#1976d2]' },
+    { value: '#FD9148', label: 'Orange', preview: 'bg-[#FD9148]' },
+    { value: '#FFAD03', label: 'Yellow', preview: 'bg-[#FFAD03]' },
+    { value: '#10b981', label: 'Green', preview: 'bg-green-500' },
+    { value: '#8b5cf6', label: 'Purple', preview: 'bg-purple-500' },
+    { value: '#06b6d4', label: 'Teal', preview: 'bg-teal-500' }
   ];
 
   const outcomeTypes = [
@@ -51,28 +66,32 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
   ];
 
   // Update local state when data changes
-  // Update local state when data changes
   useEffect(() => {
     if (data) {
       setOutcomesData({
         title: '',
-        subtitle: '',
-        background_color: 'bg-gray-50',
+        description: '',
+        background_color: '#ffffff',
+        content_background: 'white',
         outcomes: [],
         ...data
       });
     }
   }, [data]);
 
-  // Validate form data
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!outcomesData.title || !outcomesData.title.trim()) newErrors.title = 'Title is required';
-    if (!outcomesData.subtitle || !outcomesData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // Refresh outcomes data from API
+  const refreshOutcomesData = async () => {
+    try {
+      const outcomesContent = await HomepageService.getOutcomesContent();
+      setOutcomesData(outcomesContent);
+      if (onUpdate) {
+        onUpdate(outcomesContent);
+      }
+    } catch (error) {
+      console.error('Error refreshing outcomes data:', error);
+      // Show error toast if refresh fails
+      showToast('Failed to refresh outcomes data. Please try again.', 'error');
+    }
   };
 
   // Validate outcome data
@@ -92,22 +111,6 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
     return newErrors;
   };
 
-  // Handle form submission
-  const handleSave = async () => {
-    if (!validateForm()) return;
-    
-    setIsSaving(true);
-    try {
-      const updatedData = await HomepageService.updateOutcomesSection(outcomesData);
-      onUpdate(updatedData);
-      setShowConfirmModal(false);
-    } catch (error) {
-      console.error('Error saving outcomes data:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   // Handle input changes
   const handleInputChange = (field, value) => {
     setOutcomesData(prev => ({ ...prev, [field]: value }));
@@ -116,22 +119,57 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
     }
   };
 
+  // Handle manual save of section settings
+  const handleSaveSection = async () => {
+    // Validate section data
+    const newErrors = {};
+    if (!outcomesData.title || !outcomesData.title.trim()) newErrors.title = 'Title is required';
+    if (!outcomesData.description || !outcomesData.description.trim()) newErrors.description = 'Description is required';
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await HomepageService.updateOutcomesSection(outcomesData);
+      if (onUpdate) {
+        onUpdate(outcomesData);
+      }
+      
+      // Clear any previous errors
+      setErrors({});
+      
+      // Show success message briefly
+      showToast(result.message || 'Section settings saved successfully!', 'success');
+      
+    } catch (error) {
+      console.error('Error saving section settings:', error);
+      setErrors({ api: 'Failed to save section settings. Please try again.' });
+      showToast('Failed to save section settings. Please try again.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Add new outcome
   const addOutcome = () => {
     const newOutcome = {
-      id: Date.now(),
       title: '',
       description: '',
       value: '',
       unit: '',
       icon_class: 'fas fa-star',
-      color: 'primary',
+      iconClass: 'fas fa-star',
+      color: '#1976d2',
       type: 'metric',
-      order: outcomesData.outcomes.length + 1,
       is_featured: false,
       is_published: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      additional_info: '',
+      additionalInfo: '',
+      tags: null,
+      progress: null
     };
     
     setSelectedOutcome(newOutcome);
@@ -145,56 +183,88 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
   };
 
   // Save outcome
-  const saveOutcome = () => {
+  const saveOutcome = async () => {
     const outcomeErrors = validateOutcome(selectedOutcome);
     if (Object.keys(outcomeErrors).length > 0) {
       setErrors(outcomeErrors);
       return;
     }
 
-    if (selectedOutcome.id && outcomesData.outcomes.find(o => o.id === selectedOutcome.id)) {
-      // Update existing outcome
-      setOutcomesData(prev => ({
-        ...prev,
-        outcomes: prev.outcomes.map(o => 
-          o.id === selectedOutcome.id ? { ...selectedOutcome, updated_at: new Date().toISOString() } : o
-        )
-      }));
-    } else {
-      // Add new outcome
-      setOutcomesData(prev => ({
-        ...prev,
-        outcomes: [...prev.outcomes, { ...selectedOutcome, id: Date.now() }]
-      }));
-    }
+    setIsSaving(true);
+    try {
+      if (selectedOutcome.id && outcomesData.outcomes.find(o => o.id === selectedOutcome.id)) {
+        // Update existing outcome via API
+        await HomepageService.updateOutcome(selectedOutcome.id, selectedOutcome);
+      } else {
+        // Add new outcome via API
+        await HomepageService.addOutcome(selectedOutcome);
+      }
 
-    setShowOutcomeModal(false);
-    setSelectedOutcome(null);
-    setErrors({});
+      // Refresh the outcomes data from API
+      await refreshOutcomesData();
+
+      setShowOutcomeModal(false);
+      setSelectedOutcome(null);
+      setErrors({});
+      showToast('Outcome saved successfully!', 'success');
+    } catch (error) {
+      console.error('Error saving outcome:', error);
+      setErrors({ api: 'Failed to save outcome. Please try again.' });
+      showToast('Failed to save outcome. Please try again.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Delete outcome with confirmation
+  const confirmDeleteOutcome = (outcome) => {
+    setOutcomeToDelete(outcome);
+    setShowDeleteModal(true);
   };
 
   // Delete outcome
-  const deleteOutcome = (outcomeId) => {
-    setOutcomesData(prev => ({
-      ...prev,
-      outcomes: prev.outcomes.filter(o => o.id !== outcomeId)
-    }));
+  const deleteOutcome = async () => {
+    if (!outcomeToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await HomepageService.deleteOutcome(outcomeToDelete.id);
+      
+      // Refresh the outcomes data from API
+      await refreshOutcomesData();
+      
+      setShowDeleteModal(false);
+      setOutcomeToDelete(null);
+      showToast('Outcome deleted successfully!', 'success');
+    } catch (error) {
+      console.error('Error deleting outcome:', error);
+      setErrors({ api: 'Failed to delete outcome. Please try again.' });
+      showToast('Failed to delete outcome. Please try again.', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Move outcome up/down
-  const moveOutcome = (index, direction) => {
+  const moveOutcome = async (index, direction) => {
     const newOutcomes = [...outcomesData.outcomes];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     
     if (targetIndex >= 0 && targetIndex < newOutcomes.length) {
       [newOutcomes[index], newOutcomes[targetIndex]] = [newOutcomes[targetIndex], newOutcomes[index]];
       
-      // Update order values
-      newOutcomes.forEach((outcome, i) => {
-        outcome.order = i + 1;
-      });
-      
-      setOutcomesData(prev => ({ ...prev, outcomes: newOutcomes }));
+      try {
+        // Send reorder request to API
+        const itemIds = newOutcomes.map(outcome => outcome.id);
+        await HomepageService.reorderOutcomes(itemIds);
+        
+        // Refresh the outcomes data from API
+        await refreshOutcomesData();
+        showToast('Outcomes reordered successfully!', 'success');
+      } catch (error) {
+        console.error('Error reordering outcomes:', error);
+        showToast('Failed to reorder outcomes. Please try again.', 'error');
+      }
     }
   };
 
@@ -223,20 +293,40 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
             <i className="fas fa-plus mr-2"></i>
             Add Outcome
           </button>
-          <button
-            onClick={() => setShowConfirmModal(true)}
-            disabled={isSaving}
-            className="px-4 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0056b3] transition-colors disabled:opacity-50"
-          >
-            <i className="fas fa-save mr-2"></i>
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </button>
         </div>
       </div>
 
       {/* Section Settings */}
       <div className="bg-white rounded-lg shadow-sm p-6 border">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900">Section Settings</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Section Settings</h3>
+          <button
+            onClick={handleSaveSection}
+            disabled={isSaving}
+            className="px-4 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0056b3] transition-colors disabled:opacity-50"
+          >
+            {isSaving ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Saving...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-save mr-2"></i>
+                Save Section
+              </>
+            )}
+          </button>
+        </div>
+        
+        {errors.api && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center">
+              <i className="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+              <span className="text-red-700 text-sm">{errors.api}</span>
+            </div>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -257,18 +347,18 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Section Subtitle *
+              Section Description *
             </label>
             <input
               type="text"
-              value={outcomesData.subtitle}
-              onChange={(e) => handleInputChange('subtitle', e.target.value)}
+              value={outcomesData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-transparent ${
-                errors.subtitle ? 'border-red-500' : 'border-gray-300'
+                errors.description ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="Measurable impact and achievements"
             />
-            {errors.subtitle && <p className="text-red-500 text-sm mt-1">{errors.subtitle}</p>}
+            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
           </div>
         </div>
       </div>
@@ -357,7 +447,7 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
                         <i className="fas fa-edit"></i>
                       </button>
                       <button
-                        onClick={() => deleteOutcome(outcome.id)}
+                        onClick={() => confirmDeleteOutcome(outcome)}
                         className="p-2 text-red-500 hover:text-red-700"
                       >
                         <i className="fas fa-trash"></i>
@@ -503,18 +593,30 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Color *
                     </label>
-                    <select
-                      value={selectedOutcome?.color || ''}
-                      onChange={(e) => setSelectedOutcome(prev => ({ ...prev, color: e.target.value }))}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-transparent ${
-                        errors.color ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    >
-                      <option value="">Select a color</option>
-                      {colorOptions.map(color => (
-                        <option key={color.value} value={color.value}>{color.label}</option>
-                      ))}
-                    </select>
+                    <div className="space-y-2">
+                      <select
+                        value={selectedOutcome?.color || ''}
+                        onChange={(e) => setSelectedOutcome(prev => ({ ...prev, color: e.target.value }))}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-transparent ${
+                          errors.color ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <option value="">Select a color</option>
+                        {colorOptions.map(color => (
+                          <option key={color.value} value={color.value}>{color.label}</option>
+                        ))}
+                      </select>
+                      <div className="text-xs text-gray-500">Or enter custom hex color:</div>
+                      <input
+                        type="text"
+                        value={selectedOutcome?.color || ''}
+                        onChange={(e) => setSelectedOutcome(prev => ({ ...prev, color: e.target.value }))}
+                        placeholder="#1976d2"
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#0066CC] focus:border-transparent ${
+                          errors.color ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                    </div>
                     {errors.color && <p className="text-red-500 text-sm mt-1">{errors.color}</p>}
                   </div>
                 </div>
@@ -551,9 +653,17 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
                 </button>
                 <button
                   onClick={saveOutcome}
-                  className="px-4 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0056b3] transition-colors"
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0056b3] transition-colors disabled:opacity-50"
                 >
-                  Save Outcome
+                  {isSaving ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Outcome'
+                  )}
                 </button>
               </div>
             </motion.div>
@@ -561,18 +671,28 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
         )}
       </AnimatePresence>
 
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
         <ConfirmationModal
-          isOpen={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
-          onConfirm={handleSave}
-          title="Save Outcomes Section Changes"
-          message="Are you sure you want to save these changes? This will update the outcomes section on your homepage."
-          confirmText="Save Changes"
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={deleteOutcome}
+          title="Delete Outcome"
+          message={`Are you sure you want to delete "${outcomeToDelete?.title}"? This action cannot be undone.`}
+          confirmText="Delete"
           cancelText="Cancel"
-          type="info"
-          isLoading={isSaving}
+          type="danger"
+          isLoading={isDeleting}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={clearToast}
         />
       )}
     </div>
