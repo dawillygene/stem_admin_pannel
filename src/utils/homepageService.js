@@ -362,7 +362,7 @@ const HomepageService = {
       console.error('Error toggling publish status:', error);
       throw error;
     }
-  }
+  },
 };
 
 export default HomepageService;
