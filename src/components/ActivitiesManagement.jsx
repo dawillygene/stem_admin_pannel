@@ -45,9 +45,16 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
   ];
 
   // Update local state when data changes
+  // Update local state when data changes
   useEffect(() => {
     if (data) {
-      setActivitiesData(data);
+      setActivitiesData({
+        title: '',
+        subtitle: '',
+        background_color: 'white',
+        activities: [],
+        ...data
+      });
     }
   }, [data]);
 

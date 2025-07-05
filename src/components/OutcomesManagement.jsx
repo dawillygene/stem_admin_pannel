@@ -51,9 +51,16 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
   ];
 
   // Update local state when data changes
+  // Update local state when data changes
   useEffect(() => {
     if (data) {
-      setOutcomesData(data);
+      setOutcomesData({
+        title: '',
+        subtitle: '',
+        background_color: 'bg-gray-50',
+        outcomes: [],
+        ...data
+      });
     }
   }, [data]);
 

@@ -60,9 +60,40 @@ const EthicsManagement = ({ data, onUpdate, isLoading }) => {
   ];
 
   // Update local state when data changes
+  // Update local state when data changes
   useEffect(() => {
     if (data) {
-      setEthicsData(data);
+      setEthicsData({
+        title: '',
+        subtitle: '',
+        description: '',
+        background_color: 'bg-gray-50',
+        policies: [],
+        compliance: {
+          certifications: [],
+          audits: [],
+          last_review: ''
+        },
+        contact: {
+          email: '',
+          phone: '',
+          address: ''
+        },
+        is_published: true,
+        ...data,
+        compliance: {
+          certifications: [],
+          audits: [],
+          last_review: '',
+          ...(data.compliance || {})
+        },
+        contact: {
+          email: '',
+          phone: '',
+          address: '',
+          ...(data.contact || {})
+        }
+      });
     }
   }, [data]);
 

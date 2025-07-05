@@ -57,9 +57,41 @@ const MonitoringManagement = ({ data, onUpdate, isLoading }) => {
   ];
 
   // Update local state when data changes
+  // Update local state when data changes
   useEffect(() => {
     if (data) {
-      setMonitoringData(data);
+      setMonitoringData({
+        title: '',
+        subtitle: '',
+        description: '',
+        background_color: 'bg-[#0066CC]',
+        text_color: 'text-white',
+        framework: {
+          title: '',
+          description: '',
+          phases: []
+        },
+        indicators: [],
+        reports: {
+          frequency: 'quarterly',
+          next_report: '',
+          last_report: ''
+        },
+        is_published: true,
+        ...data,
+        framework: {
+          title: '',
+          description: '',
+          phases: [],
+          ...(data.framework || {})
+        },
+        reports: {
+          frequency: 'quarterly',
+          next_report: '',
+          last_report: '',
+          ...(data.reports || {})
+        }
+      });
     }
   }, [data]);
 

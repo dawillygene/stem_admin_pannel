@@ -34,7 +34,14 @@ const HeroManagement = ({ data, onUpdate, isLoading }) => {
   // Update local state when data changes
   useEffect(() => {
     if (data) {
-      setHeroData(data);
+      setHeroData({
+        ...data,
+        animations: {
+          floating_elements: false,
+          gradient_overlay: false,
+          ...data.animations
+        }
+      });
     }
   }, [data]);
 
@@ -80,7 +87,12 @@ const HeroManagement = ({ data, onUpdate, isLoading }) => {
   const handleAnimationChange = (field, value) => {
     setHeroData(prev => ({
       ...prev,
-      animations: { ...prev.animations, [field]: value }
+      animations: { 
+        floating_elements: false,
+        gradient_overlay: false,
+        ...prev.animations, 
+        [field]: value 
+      }
     }));
   };
 
@@ -336,7 +348,7 @@ const HeroManagement = ({ data, onUpdate, isLoading }) => {
                   <label className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={heroData.animations.floating_elements}
+                      checked={heroData.animations?.floating_elements || false}
                       onChange={(e) => handleAnimationChange('floating_elements', e.target.checked)}
                       className="w-4 h-4 text-[#0066CC] border-gray-300 rounded focus:ring-[#0066CC]"
                     />
@@ -348,7 +360,7 @@ const HeroManagement = ({ data, onUpdate, isLoading }) => {
                   <label className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={heroData.animations.gradient_overlay}
+                      checked={heroData.animations?.gradient_overlay || false}
                       onChange={(e) => handleAnimationChange('gradient_overlay', e.target.checked)}
                       className="w-4 h-4 text-[#0066CC] border-gray-300 rounded focus:ring-[#0066CC]"
                     />
