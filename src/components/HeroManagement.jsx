@@ -35,11 +35,20 @@ const HeroManagement = ({ data, onUpdate, isLoading }) => {
   useEffect(() => {
     if (data) {
       setHeroData({
-        ...data,
+        title: data.title || '',
+        subtitle: data.subtitle || '',
+        description: data.description || '',
+        background_image: data.background_image || '',
+        background_gradient: data.background_gradient || 'from-[#0066CC] to-[#FD9148]',
+        cta_text: data.cta_text || 'Learn More',
+        cta_link: data.cta_link || '/about',
+        search_placeholder: data.search_placeholder || 'Search for programs...',
+        search_enabled: data.search_enabled !== undefined ? data.search_enabled : true,
+        is_published: data.is_published !== undefined ? data.is_published : true,
         animations: {
           floating_elements: false,
           gradient_overlay: false,
-          ...data.animations
+          ...(data.animations || {})
         }
       });
     }
@@ -49,11 +58,11 @@ const HeroManagement = ({ data, onUpdate, isLoading }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!heroData.title.trim()) newErrors.title = 'Title is required';
-    if (!heroData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
-    if (!heroData.description.trim()) newErrors.description = 'Description is required';
-    if (!heroData.cta_text.trim()) newErrors.cta_text = 'CTA text is required';
-    if (!heroData.cta_link.trim()) newErrors.cta_link = 'CTA link is required';
+    if (!heroData.title || !heroData.title.trim()) newErrors.title = 'Title is required';
+    if (!heroData.subtitle || !heroData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
+    if (!heroData.description || !heroData.description.trim()) newErrors.description = 'Description is required';
+    if (!heroData.cta_text || !heroData.cta_text.trim()) newErrors.cta_text = 'CTA text is required';
+    if (!heroData.cta_link || !heroData.cta_link.trim()) newErrors.cta_link = 'CTA link is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

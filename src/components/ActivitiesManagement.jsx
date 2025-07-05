@@ -62,8 +62,8 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!activitiesData.title.trim()) newErrors.title = 'Title is required';
-    if (!activitiesData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
+    if (!activitiesData.title || !activitiesData.title.trim()) newErrors.title = 'Title is required';
+    if (!activitiesData.subtitle || !activitiesData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -73,8 +73,8 @@ const ActivitiesManagement = ({ data, onUpdate, isLoading }) => {
   const validateActivity = (activity) => {
     const newErrors = {};
     
-    if (!activity.title.trim()) newErrors.title = 'Activity title is required';
-    if (!activity.description.trim()) newErrors.description = 'Activity description is required';
+    if (!activity.title || !activity.title.trim()) newErrors.title = 'Activity title is required';
+    if (!activity.description || !activity.description.trim()) newErrors.description = 'Activity description is required';
     if (!activity.icon_class) newErrors.icon_class = 'Activity icon is required';
     if (!activity.color) newErrors.color = 'Activity color is required';
     

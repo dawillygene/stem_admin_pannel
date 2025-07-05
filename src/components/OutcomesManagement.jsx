@@ -68,8 +68,8 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!outcomesData.title.trim()) newErrors.title = 'Title is required';
-    if (!outcomesData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
+    if (!outcomesData.title || !outcomesData.title.trim()) newErrors.title = 'Title is required';
+    if (!outcomesData.subtitle || !outcomesData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -79,8 +79,8 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
   const validateOutcome = (outcome) => {
     const newErrors = {};
     
-    if (!outcome.title.trim()) newErrors.title = 'Outcome title is required';
-    if (!outcome.description.trim()) newErrors.description = 'Outcome description is required';
+    if (!outcome.title || !outcome.title.trim()) newErrors.title = 'Outcome title is required';
+    if (!outcome.description || !outcome.description.trim()) newErrors.description = 'Outcome description is required';
     if (!outcome.icon_class) newErrors.icon_class = 'Outcome icon is required';
     if (!outcome.color) newErrors.color = 'Outcome color is required';
     if (!outcome.type) newErrors.type = 'Outcome type is required';

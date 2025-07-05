@@ -101,9 +101,9 @@ const EthicsManagement = ({ data, onUpdate, isLoading }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!ethicsData.title.trim()) newErrors.title = 'Title is required';
-    if (!ethicsData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
-    if (!ethicsData.description.trim()) newErrors.description = 'Description is required';
+    if (!ethicsData.title || !ethicsData.title.trim()) newErrors.title = 'Title is required';
+    if (!ethicsData.subtitle || !ethicsData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
+    if (!ethicsData.description || !ethicsData.description.trim()) newErrors.description = 'Description is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -113,8 +113,8 @@ const EthicsManagement = ({ data, onUpdate, isLoading }) => {
   const validatePolicy = (policy) => {
     const newErrors = {};
     
-    if (!policy.title.trim()) newErrors.title = 'Policy title is required';
-    if (!policy.description.trim()) newErrors.description = 'Policy description is required';
+    if (!policy.title || !policy.title.trim()) newErrors.title = 'Policy title is required';
+    if (!policy.description || !policy.description.trim()) newErrors.description = 'Policy description is required';
     if (!policy.type) newErrors.type = 'Policy type is required';
     if (!policy.priority) newErrors.priority = 'Priority level is required';
     

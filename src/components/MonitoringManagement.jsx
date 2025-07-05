@@ -99,9 +99,9 @@ const MonitoringManagement = ({ data, onUpdate, isLoading }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!monitoringData.title.trim()) newErrors.title = 'Title is required';
-    if (!monitoringData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
-    if (!monitoringData.description.trim()) newErrors.description = 'Description is required';
+    if (!monitoringData.title || !monitoringData.title.trim()) newErrors.title = 'Title is required';
+    if (!monitoringData.subtitle || !monitoringData.subtitle.trim()) newErrors.subtitle = 'Subtitle is required';
+    if (!monitoringData.description || !monitoringData.description.trim()) newErrors.description = 'Description is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
