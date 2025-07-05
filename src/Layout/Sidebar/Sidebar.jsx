@@ -28,7 +28,7 @@ const Sidebar = () => {
         try {
           const res = await API.get("/auth/users/me");
           setUser(res.data);
-        } catch {
+        } catch (error) {
           setUser({ name: "" });
         }
       }

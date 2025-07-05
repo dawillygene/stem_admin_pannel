@@ -279,22 +279,21 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Outcomes Section Management</h2>
-          <p className="text-gray-600">Configure the outcomes and results section of your homepage</p>
+      {/* Header */}        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Outcomes Section Management</h2>
+            <p className="text-gray-600">Configure the outcomes and results section of your homepage</p>
+          </div>
+          <div className="flex space-x-3">
+            <button
+              onClick={addOutcome}
+              className="px-4 py-2 bg-[#FFAD03] text-white rounded-lg hover:bg-[#e6980a] transition-colors"
+            >
+              <i className="fas fa-plus mr-2"></i>
+              Add Outcome
+            </button>
+          </div>
         </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={addOutcome}
-            className="px-4 py-2 bg-[#FFAD03] text-white rounded-lg hover:bg-[#e6980a] transition-colors"
-          >
-            <i className="fas fa-plus mr-2"></i>
-            Add Outcome
-          </button>
-        </div>
-      </div>
 
       {/* Section Settings */}
       <div className="bg-white rounded-lg shadow-sm p-6 border">
@@ -391,67 +390,74 @@ const OutcomesManagement = ({ data, onUpdate, isLoading }) => {
                   animate={{ opacity: 1, y: 0 }}
                   className="border rounded-lg p-4 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4 flex-1">
-                      <div className={`p-3 rounded-lg ${colorOptions.find(c => c.value === outcome.color)?.preview || 'bg-gray-500'}`}>
-                        <i className={`${outcome.icon_class} text-white text-lg`}></i>
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h4 className="font-semibold text-gray-900">{outcome.title}</h4>
-                          <span className="text-sm text-gray-500">#{outcome.order}</span>
-                          {outcome.type === 'metric' && outcome.value && (
-                            <span className="px-2 py-1 bg-[#0066CC] text-white text-xs rounded-full">
-                              {outcome.value} {outcome.unit}
-                            </span>
-                          )}
-                          {outcome.is_featured && (
-                            <span className="px-2 py-1 bg-[#FFAD03] text-white text-xs rounded-full">Featured</span>
-                          )}
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            outcome.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {outcome.is_published ? 'Published' : 'Draft'}
-                          </span>
-                        </div>
-                        
-                        <p className="text-gray-600 text-sm mb-2">{outcome.description}</p>
-                        
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="capitalize">{outcome.type}</span>
-                          <span>Updated: {new Date(outcome.updated_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
+                  {/* Header with title and action buttons */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <h4 className="font-semibold text-gray-900">{outcome.title}</h4>
+                      <span className="text-sm text-gray-500">#{outcome.order}</span>
+                      {outcome.type === 'metric' && outcome.value && (
+                        <span className="px-2 py-1 bg-[#0066CC] text-white text-xs rounded-full">
+                          {outcome.value} {outcome.unit}
+                        </span>
+                      )}
+                      {outcome.is_featured && (
+                        <span className="px-2 py-1 bg-[#FFAD03] text-white text-xs rounded-full">Featured</span>
+                      )}
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        outcome.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {outcome.is_published ? 'Published' : 'Draft'}
+                      </span>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
+                    {/* MAIN ACTION BUTTONS - ALWAYS VISIBLE */}
+                    <div className="flex items-center space-x-2 bg-gray-50 p-1 rounded-lg">
                       <button
                         onClick={() => moveOutcome(index, 'up')}
                         disabled={index === 0}
-                        className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        className="px-3 py-1 text-gray-600 hover:text-gray-800 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm font-medium"
+                        title="Move Up"
                       >
-                        <i className="fas fa-arrow-up"></i>
+                        ↑
                       </button>
                       <button
                         onClick={() => moveOutcome(index, 'down')}
                         disabled={index === outcomesData.outcomes.length - 1}
-                        className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        className="px-3 py-1 text-gray-600 hover:text-gray-800 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm font-medium"
+                        title="Move Down"
                       >
-                        <i className="fas fa-arrow-down"></i>
+                        ↓
                       </button>
                       <button
                         onClick={() => editOutcome(outcome)}
-                        className="p-2 text-[#0066CC] hover:text-[#0056b3]"
+                        className="px-3 py-1 bg-blue-500 text-white hover:bg-blue-600 rounded text-sm font-medium"
+                        title="Edit Outcome"
                       >
-                        <i className="fas fa-edit"></i>
+                        Edit
                       </button>
                       <button
                         onClick={() => confirmDeleteOutcome(outcome)}
-                        className="p-2 text-red-500 hover:text-red-700"
+                        className="px-3 py-1 bg-red-500 text-white hover:bg-red-600 rounded text-sm font-medium"
+                        title="Delete Outcome"
                       >
-                        <i className="fas fa-trash"></i>
+                        Delete
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Outcome Content */}
+                  <div className="flex items-start space-x-4">
+                    <div className={`p-3 rounded-lg flex-shrink-0 ${colorOptions.find(c => c.value === outcome.color)?.preview || 'bg-gray-500'}`}>
+                      <i className={`${outcome.icon_class} text-white text-lg`}></i>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <p className="text-gray-600 text-sm mb-2">{outcome.description}</p>
+                      
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span className="capitalize">{outcome.type}</span>
+                        <span>Updated: {new Date(outcome.updated_at).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   </div>
                 </motion.div>

@@ -8,6 +8,23 @@ export const AppProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setJwt(null);
+      navigate("/login");
+    }
+  }, [navigate]);
+
   const refreshJwt = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/refresh-token", {
@@ -25,12 +42,7 @@ export const AppProvider = ({ children }) => {
         setJwt(null);
         return null;
       }
-    } catch {
-   
-      if (process.env.NODE_ENV === "development") {
-            console.error("Token refresh failed");
-      }
-
+    } catch (error) {
       setJwt(null);
       return null;
     }
@@ -55,7 +67,7 @@ export const AppProvider = ({ children }) => {
   }, [jwt]);
 
   return (
-    <AuthContext.Provider value={{ jwt, setJwt, refreshJwt, loading }}>
+    <AuthContext.Provider value={{ jwt, setJwt, refreshJwt, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
