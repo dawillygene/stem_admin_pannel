@@ -112,3 +112,7 @@ docs/api/generated/
 *.crt
 *.p12
 *.pfx
+
+# Ignore documentation folder
+docs/
+
