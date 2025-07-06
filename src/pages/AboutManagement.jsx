@@ -21,7 +21,7 @@ import {
   FaHistory,
   FaTrash
 } from 'react-icons/fa';
-import { getAboutContent, exportContent, getAnalytics, deleteBenefit, deleteSpecificObjective } from '../utils/aboutApi';
+import { getAboutContent, exportContent, getAnalytics, deleteBenefit, deleteSpecificObjective, createBackgroundSection, updateBackgroundSection, deleteBackgroundSection, reorderBackgroundSections } from '../utils/aboutApi';
 import { useAuth } from '../Context/AppProvier';
 import { useToast } from '../components/Toast';
 import AboutContentModal from '../components/AboutContentModal';
@@ -30,6 +30,7 @@ import ObjectiveFormModal from '../components/ObjectiveFormModal';
 import BackgroundEditModal from '../components/BackgroundEditModal';
 import JustificationEditModal from '../components/JustificationEditModal';
 import ObjectivesEditModal from '../components/ObjectivesEditModal';
+import BackgroundSectionModal from '../components/BackgroundSectionModal';
 
 const AboutManagement = () => {
   // State management
@@ -49,11 +50,13 @@ const AboutManagement = () => {
   const [showBackgroundModal, setShowBackgroundModal] = useState(false);
   const [showJustificationModal, setShowJustificationModal] = useState(false);
   const [showObjectivesModal, setShowObjectivesModal] = useState(false);
+  const [showBackgroundSectionModal, setShowBackgroundSectionModal] = useState(false);
   
   // Selected items for modals
   const [selectedContent, setSelectedContent] = useState(null);
   const [selectedBenefit, setSelectedBenefit] = useState(null);
   const [selectedObjective, setSelectedObjective] = useState(null);
+  const [selectedBackgroundSection, setSelectedBackgroundSection] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
 
   const { jwt } = useAuth();
@@ -224,6 +227,61 @@ const AboutManagement = () => {
         console.error('Error deleting objective:', error);
         showToast('Failed to delete objective. Please try again.', 'error');
       }
+    }
+  };
+
+  // Background section CRUD handlers
+  // Author: Elia William Mariki (@dawillygene) - July 5, 2025
+  const handleCreateBackgroundSection = () => {
+    setSelectedBackgroundSection(null);
+    setShowBackgroundSectionModal(true);
+  };
+
+  const handleEditBackgroundSection = (section) => {
+    setSelectedBackgroundSection(section);
+    setShowBackgroundSectionModal(true);
+  };
+
+  const handleSaveBackgroundSection = async (sectionData) => {
+    try {
+      if (selectedBackgroundSection) {
+        // Update existing section
+        await updateBackgroundSection(selectedBackgroundSection.id, sectionData);
+        showToast('Background section updated successfully', 'success');
+      } else {
+        // Create new section
+        await createBackgroundSection(sectionData);
+        showToast('Background section created successfully', 'success');
+      }
+      await handleDataRefresh(); // Refresh data to reflect changes
+    } catch (error) {
+      console.error('Error saving background section:', error);
+      showToast('Failed to save background section. Please try again.', 'error');
+      throw error; // Re-throw to prevent modal from closing
+    }
+  };
+
+  const handleDeleteBackgroundSection = async (section) => {
+    if (window.confirm(`Are you sure you want to delete "${section.title}"? This action cannot be undone.`)) {
+      try {
+        await deleteBackgroundSection(section.id);
+        showToast('Background section deleted successfully', 'success');
+        await handleDataRefresh(); // Refresh data to reflect changes
+      } catch (error) {
+        console.error('Error deleting background section:', error);
+        showToast('Failed to delete background section. Please try again.', 'error');
+      }
+    }
+  };
+
+  const handleReorderBackgroundSections = async (sectionsOrder) => {
+    try {
+      await reorderBackgroundSections(sectionsOrder);
+      showToast('Background sections reordered successfully', 'success');
+      await handleDataRefresh(); // Refresh data to reflect changes
+    } catch (error) {
+      console.error('Error reordering background sections:', error);
+      showToast('Failed to reorder background sections. Please try again.', 'error');
     }
   };
 
@@ -701,26 +759,71 @@ const AboutManagement = () => {
 
                     {background.sections && background.sections.length > 0 && (
                       <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-gray-800">Sections</h4>
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-lg font-semibold text-gray-800">Sections</h4>
+                          <button
+                            onClick={handleCreateBackgroundSection}
+                            className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                          >
+                            <FaPlus className="mr-2" />
+                            Add Section
+                          </button>
+                        </div>
                         {background.sections
                           .sort((a, b) => a.displayOrder - b.displayOrder)
                           .map((section) => (
-                            <div key={section.id} className="bg-white rounded-lg p-6 shadow-sm">
+                            <motion.div
+                              key={section.id}
+                              className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
                               <div className="flex justify-between items-start mb-3">
-                                <h5 className="text-md font-semibold text-gray-800">{section.title}</h5>
-                                <button
-                                  onClick={() => handleViewContent('background', section)}
-                                  className="text-[#0066CC] hover:text-[#0056b3] transition-colors"
-                                >
-                                  <FaEye />
-                                </button>
+                                <h5 className="text-md font-semibold text-gray-800 flex-1">{section.title}</h5>
+                                <div className="flex gap-2 ml-4">
+                                  <button
+                                    onClick={() => handleViewContent('background', section)}
+                                    className="p-2 text-gray-500 hover:text-[#0066CC] transition-colors"
+                                    title="View details"
+                                  >
+                                    <FaEye />
+                                  </button>
+                                  <button
+                                    onClick={() => handleEditBackgroundSection(section)}
+                                    className="p-2 text-gray-500 hover:text-[#FFAD03] transition-colors"
+                                    title="Edit section"
+                                  >
+                                    <FaEdit />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteBackgroundSection(section)}
+                                    className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                                    title="Delete section"
+                                  >
+                                    <FaTrash />
+                                  </button>
+                                </div>
                               </div>
-                              <p className="text-gray-600">{section.content}</p>
-                              <div className="text-sm text-gray-500 mt-2">
+                              <p className="text-gray-600 mb-2">{section.content}</p>
+                              <div className="text-sm text-gray-500">
                                 Order: {section.displayOrder}
                               </div>
-                            </div>
+                            </motion.div>
                           ))}
+                      </div>
+                    )}
+                    
+                    {(!background.sections || background.sections.length === 0) && (
+                      <div className="text-center py-8 bg-white rounded-lg shadow-sm">
+                        <FaFileAlt className="text-4xl text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500 mb-4">No background sections available</p>
+                        <button
+                          onClick={handleCreateBackgroundSection}
+                          className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                        >
+                          Add First Section
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1121,6 +1224,15 @@ const AboutManagement = () => {
           objectives={aboutData?.objectives}
           onClose={() => setShowObjectivesModal(false)}
           onSuccess={handleDataRefresh}
+        />
+      )}
+
+      {showBackgroundSectionModal && (
+        <BackgroundSectionModal
+          isOpen={showBackgroundSectionModal}
+          onClose={() => setShowBackgroundSectionModal(false)}
+          section={selectedBackgroundSection}
+          onSave={handleSaveBackgroundSection}
         />
       )}
     </div>

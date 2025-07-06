@@ -10,7 +10,7 @@ export const galleryApi = {
       const formData = new FormData();
       formData.append("file", optimizedFile);
       formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
-      formData.append("folder", "STEM/gallery_images");
+      formData.append("folder", import.meta.env.VITE_CLOUDINARY_FOLDER + "/gallery_images");
       formData.append("quality", "auto:good");
       formData.append("fetch_format", "auto");
       formData.append("flags", "progressive");

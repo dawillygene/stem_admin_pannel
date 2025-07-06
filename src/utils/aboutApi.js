@@ -48,6 +48,87 @@ export const updateBackground = async (data) => {
   }
 };
 
+// Create new background section
+export const createBackgroundSection = async (data) => {
+  try {
+    // Validate required fields
+    if (!data.title || !data.content) {
+      throw new Error('Title and content are required');
+    }
+    
+    const sectionData = {
+      title: data.title.trim(),
+      content: data.content.trim(),
+      displayOrder: data.displayOrder || 999,
+      isActive: data.isActive !== undefined ? data.isActive : true
+    };
+    
+    const response = await API.post('/about-content/background/sections', sectionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating background section:', error);
+    throw error;
+  }
+};
+
+// Update background section
+export const updateBackgroundSection = async (id, data) => {
+  try {
+    if (!id) {
+      throw new Error('Background section ID is required');
+    }
+    
+    if (!data.title || !data.content) {
+      throw new Error('Title and content are required');
+    }
+    
+    const sectionData = {
+      title: data.title.trim(),
+      content: data.content.trim(),
+      displayOrder: data.displayOrder,
+      isActive: data.isActive
+    };
+    
+    const response = await API.put(`/about-content/background/sections/${id}`, sectionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating background section:', error);
+    throw error;
+  }
+};
+
+// Delete background section
+export const deleteBackgroundSection = async (id) => {
+  try {
+    if (!id) {
+      throw new Error('Background section ID is required');
+    }
+    
+    const response = await API.delete(`/about-content/background/sections/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting background section:', error);
+    throw error;
+  }
+};
+
+// Reorder background sections
+export const reorderBackgroundSections = async (sectionsOrder) => {
+  try {
+    if (!sectionsOrder || !Array.isArray(sectionsOrder)) {
+      throw new Error('Sections order array is required');
+    }
+    
+    const response = await API.put('/about-content/background/sections/reorder', {
+      sectionsOrder: sectionsOrder
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error reordering background sections:', error);
+    throw error;
+  }
+};
+
 // Create new benefit
 export const createBenefit = async (data) => {
   try {
@@ -431,6 +512,10 @@ export default {
   getAboutContent,
   getAboutSection,
   updateBackground,
+  createBackgroundSection,
+  updateBackgroundSection,
+  deleteBackgroundSection,
+  reorderBackgroundSections,
   createBenefit,
   updateBenefit,
   deleteBenefit,

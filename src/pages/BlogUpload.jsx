@@ -37,11 +37,10 @@ const BlogUpload = () => {
       // Convert image to WebP format with compression before upload
       const optimizedFile = await convertToWebP(file);
 
-      const formData = new FormData();
-      formData.append("file", optimizedFile);
+      const formData = new FormData();      formData.append("file", optimizedFile);
       formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
-      formData.append("folder", "STEM/blog_images");
-      
+      formData.append("folder", import.meta.env.VITE_CLOUDINARY_FOLDER);
+
       // Add Cloudinary transformations for further optimization
       formData.append("quality", "auto:good");
       formData.append("fetch_format", "auto");
